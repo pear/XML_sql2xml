@@ -26,6 +26,8 @@
 <br />
 <a href="#getit">How to get it</a>
 <br />
+<a href="#api">API-Documentation</a>
+<br />
 <a href="#useit">How to use it</a>
 <br />
 
@@ -112,12 +114,13 @@ work.<br />
 You can also watch at the class code directly here:<br />
 <a href="http://php.chregu.tv/?file=XML/sql2xml.php">sql2xml.phps</a><br />
 <a href="http://php.chregu.tv/?file=XML/sql2xml_ext.php">sql2xml_ext.phps</a>
-<p>At the moment, the sql2xml modules are in the
-Experimental-directory, so you have to move those classes to the
-XML/ directory in your default pear-directory. If you downloaded
-the classes from this site, you have to move them also into the
-XML/-directory in the pear-directory<br />
-</p>
+<p />
+
+<h3><a name="api"/>API-Documentation</h3>
+
+For details about the methods, see the
+<a href="http://php.chregu.tv/sql2xml/apidoc/">API-Documentation</a>, generated with PHPDoc.
+
 
 <h3><a name="useit"/>How to use it</h3>
 
@@ -558,7 +561,7 @@ $xmlstring = '<pre>&lt;?xml version=&quot;1.0&quot;?&gt;
 
 <h4><a name="xpath"/>What's this xpath stuff ?</h4>
 After you added a query, you normaly have no direct access to the result of this query, but maybe you need some values of it for further processing. Instead of making the same query again, you can get the values with an xpath-expression. Xpath is a W3-Standard and for further information about that, ask your preferred XSL/XML book, or http://www.w3.org.<p />
-The functions getXpathValue() and getXpathChildValues() make it relatively easy to get values from the stuff already inserted into the xml. Just see the examples, how it roughly works. Furthermore you can apply xpath-expression directly in sql-queries and when you're importing another xml-file.<br /> 
+The functions getXpathValue() and getXpathChildValues() make it relatively easy to get values from the stuff already inserted into the xml. Just see the examples, how it roughly works. Furthermore you can apply xpath-expression directly in sql-queries and when you're importing another xml-file.<br />
 In the first example below you can see, how we get the name of the band with an id = 2.<br />
 In the second example, we get an array back with all the information for the band with an id = 2.<br />
 You can also add xpath-expressions directly to the sql-query to refer to values got with a query before. In the third example, we want additionally all the albums from the band called "The Blabbers". Therefore we have to know the ID of this band, which we get with the xpath-expression in the curly brackets (but only if we added a query before containing this information...).<br />
@@ -881,8 +884,6 @@ $xmlstring = '<pre>&lt;?xml version=&quot;1.0&quot;?&gt;
 
 <h3><a name="end"/>The End</h3>
 
-I hope, I'll bring phpdoc soon to work again, so i can provide you
-with I nice page for the API of this class.
 
 <p>For questions and remarks, contact me <a
 href="mailto:chregu@nomad.ch">chregu@nomad.ch</a>.</p>
