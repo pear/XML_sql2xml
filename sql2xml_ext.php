@@ -79,7 +79,7 @@ class XML_sql2xml_ext extends XML_sql2xml {
        $this->setOptions(array("user_options"=>$user_options));
 
     }
-
+   /*
     * @param  $dsn string with PEAR::DB "data source name" or object DB object
     * @param  $root string of the name of the xml-doc root element.
     * @access public
