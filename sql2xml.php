@@ -156,7 +156,17 @@ class XML_sql2xml {
     */
     var $user_tableInfo = array();
 
+    /**
+    * the encoding type, the input from the db has
+    */
+    var $encoding_from  = "ISO-8859-1";    
 
+    /**
+    * the encoding type, the output in the xml should have 
+    * (note that domxml at the moment only support UTF-8, or at least it looks like)
+    */  
+    var $encoding_to = "UTF-8";
+    
     /**
     * Constructor
     * The Constructor can take a Pear::DB "data source name" (eg.
@@ -203,6 +213,10 @@ class XML_sql2xml {
         }
 
         $this->xmldoc = domxml_new_xmldoc('1.0');
+
+        //oehm, seems not to work, unfortunately.... does anybody know a solution?
+        $this->xmldoc->encoding = $this->encoding_to;
+        
         if ($root) {
             $this->xmlroot = $this->xmldoc->add_root($root);
         }
@@ -402,6 +416,7 @@ class XML_sql2xml {
         }
         else
         {
+            $FirstFetchDone = False;
             $fetchmode = DB_FETCHMODE_ORDERED;
         }
 
@@ -420,7 +435,7 @@ class XML_sql2xml {
                 }
 
 
-                if (is_null($tableInfo["parent_table"][$value["table"]]))
+                if (!isset($tableInfo["parent_table"]) || is_null($tableInfo["parent_table"][$value["table"]]))
                 {
                     $tableInfo["parent_key"][$value["table"]] = $key;
                     $tableInfo["parent_table"][$value["table"]] = $parenttable;
@@ -439,12 +454,16 @@ class XML_sql2xml {
         {
             $tableInfo = $this->array_merge_clobber($tableInfo,$this->user_tableInfo);
         }
-        $parent[root] = $this->insertNewResult(&$tableInfo);
-      
-        while ($FirstFetchDone || $res = $result->FetchRow($fetchmode))
+        $parent['root'] = $this->insertNewResult(&$tableInfo);
+
+        //initialize $resold to get rid of warning messages;
+        $resold[0] = Null;  
+
+        while ($FirstFetchDone == True || $res = $result->FetchRow($fetchmode))
         {
             //FirstFetchDone is only for emulating tableInfo, as long as not all dbs support tableInfo. can go away later
             $FirstFetchDone = False;
+    
             while (list($key, $val) = each($res))
             {
                 if ($resold[$tableInfo["parent_key"][$tableInfo[$key]["table"]]] != $res[$tableInfo["parent_key"][$tableInfo[$key]["table"]]] || !$this->nested)
@@ -647,7 +666,31 @@ class XML_sql2xml {
     */
     function xml_encode ($text)
     {
-        $text = utf8_encode(ereg_replace("&","&amp;",$text));
+        if (function_exists("iconv") && isset($this->encoding_from))
+        {
+             ini_set("track_errors",1);
+             $text = iconv($this->encoding_from,$this->encoding_to,ereg_replace("&","&amp;",$text));
+
+             if (! isset($text) )
+             {
+                if (isset($php_errormsg))
+                {
+                    $errormsg = "error: $php_errormsg";
+                }
+                else
+                {
+                    $errormsg = "undefined iconv error, turn on track_errors in php.ini to get more details";
+                }            
+                return PEAR::raiseError($errormsg,Null,PEAR_ERROR_DIE);
+             }   
+             else {
+                return $text;
+             }
+        }
+        else 
+        {
+            $text = utf8_encode(ereg_replace("&","&amp;",$text));
+        }
         return $text;
     }
 
@@ -705,6 +748,17 @@ class XML_sql2xml {
         $this->xmlroot = $this->xmldoc->root();
     }
 
-
+    /**
+    * sets the encoding for the db2xml transformation
+    * @param    string encoding to transform from
+    * @param    string encoding to transform to    
+    * @acces public
+    */
+    function setEncoding ($encoding_from = "ISO-8859-1", $encoding_to ="UTF-8")
+    {
+        $this->encoding_from = $encoding_from;
+        $this->encoding_to = $encoding_to;
+    }
+    
 }
 ?>

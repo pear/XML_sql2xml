@@ -17,6 +17,7 @@
 	- Adding of XML-files/strings is possible
 	- works with 4.0.6 and below
         - setOption can delete values set before.
+	- Added possibility of other input encoding schemes than iso-8859-1
     </Notes>
   </Release>
   <FileList>

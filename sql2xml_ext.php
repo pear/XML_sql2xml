@@ -49,9 +49,12 @@ class XML_sql2xml_ext extends XML_sql2xml {
         // DefaultValues for user_options
 
         $user_options = array (
-               xml_seperator =>"_",
-               element_id => "ID",
-               print_empty_ids => False,
+               'xml_seperator' =>"_",
+               'element_id' => "ID",
+               'print_empty_ids' => False,
+               'selected_id' => array(),
+               'field_translate' => array(),
+               'attributes' => array()
         );
 
        $this->setOptions(array("user_options"=>$user_options));
@@ -63,7 +66,7 @@ class XML_sql2xml_ext extends XML_sql2xml {
         if (!$tableInfo[$key]["table"]) {
             $tableInfo[$key]["table"] = $this->tagNameResult;
         }
-        if ($this->user_options[element_id] && !$res[$tableInfo["id"][$tableInfo[$key]["table"]]] && !$this->user_options[print_empty_ids])
+        if ($this->user_options['element_id'] && !$res[$tableInfo["id"][$tableInfo[$key]["table"]]] && !$this->user_options['print_empty_ids'])
         {
             return Null;
         }
@@ -80,9 +83,9 @@ class XML_sql2xml_ext extends XML_sql2xml {
         /* make attribute selected if ID = selected_id OR tableName.ID = selected_id. for the second case
             you can give an array for multiple selected entries */
 
-        if ($res[$tableInfo["id"][$tableInfo[$key]["table"]]] == $this->user_options[selected_id]
-            || $tableInfo[$key]["table"].$res[$tableInfo["id"][$tableInfo[$key]["table"]]] == $this->user_options[selected_id]
-            || (is_array($this->user_options[selected_id]) && in_array($tableInfo[$key]["table"].$res[$tableInfo["id"][$tableInfo[$key]["table"]]],$this->user_options[selected_id])))
+        if ($res[$tableInfo["id"][$tableInfo[$key]["table"]]] == $this->user_options['selected_id']
+            || $tableInfo[$key]["table"].$res[$tableInfo["id"][$tableInfo[$key]["table"]]] == $this->user_options['selected_id']
+            || (is_array($this->user_options['selected_id']) && in_array($tableInfo[$key]["table"].$res[$tableInfo["id"][$tableInfo[$key]["table"]]],$this->user_options['selected_id'])))
 
             {
                 $this->SetAttribute($new_row,"selected", "selected");
@@ -102,9 +105,9 @@ class XML_sql2xml_ext extends XML_sql2xml {
 
     function insertNewResult (&$tableInfo) {
 
-        if ($this->user_options["result_root"])
+        if (isset($this->user_options["result_root"]))
             $result_root = $this->user_options["result_root"];
-        elseif ($tableInfo[0]["table"])
+        elseif (isset($tableInfo[0]["table"]))
             $result_root = $tableInfo[0]["table"];
         else
             $result_root = "resultset";
@@ -125,19 +128,28 @@ class XML_sql2xml_ext extends XML_sql2xml {
         }
         elseif ($this->user_options["xml_seperator"])
         {
-            //the preg should be only done once....
+           // initialize some variables to get rid of warning messages
+            $beforetags = "";
+            $before[-1] = Null;
+            //the preg should be only done once...            
             $i = 0;
-            preg_match_all("/([^" . $this->user_options["xml_seperator"] . "]+)" . $this->user_options[xml_seperator] . "*/", $tableInfo[$key]["name"], $regs);
+            preg_match_all("/([^" . $this->user_options["xml_seperator"] . "]+)" . $this->user_options['xml_seperator'] . "*/", $tableInfo[$key]["name"], $regs);
 
-
-
-            $subrow[$regs[1][-1]] = $parent;
+            if (isset($regs[1][-1]))
+            {
+                $subrow[$regs[1][-1]] = $parent;
+            }
+            else 
+            {
+                $subrow[Null] = $parent;
+            }
             // here we separate db fields to subtags.
+
             for ($i = 0; $i < (count($regs[1]) - 1); $i++)
             {
                 $beforetags .=$regs[1][$i]."_";
                 $before[$i] = $beforetags;
-                if ( ! $subrow[$before[$i]] ) {
+                if ( ! isset($subrow[$before[$i]]) ) {
                     $subrow[$before[$i]] = $subrow[$before[$i - 1]]->new_child($regs[1][$i], NULL);
                 }
             }
@@ -152,11 +164,12 @@ class XML_sql2xml_ext extends XML_sql2xml {
     }
 
     function addTableinfo($key, $value, &$tableInfo) {
-        if (!$tableInfo[id][$value["table"]] && $value["name"] == $this->user_options["element_id"] )
+        
+        if (!isset($tableInfo['id'][$value["table"]]) && $value["name"] == $this->user_options["element_id"] )
         {
-            $tableInfo[id][$value["table"]]= $key;
+            $tableInfo['id'][$value["table"]]= $key;
         }
-        if ($this->user_options["field_translate"][$value["name"]]) {
+        if (isset($this->user_options["field_translate"][$value["name"]])) {
             $tableInfo[$key]["name"] = $this->user_options["field_translate"][$value["name"]];
         }
     }
