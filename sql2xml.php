@@ -47,7 +47,7 @@
 * More documentation and a tutorial/how-to can be found at
 *   http://php.chregu.tv/sql2xml
 *
-* @author   Christian Stocker <chregu@nomad.ch>
+* @author   Christian Stocker <chregu@bitflux.ch>
 * @version  $Id$
 * @package  XML
 */
@@ -457,8 +457,7 @@ class XML_sql2xml {
                     $tableInfo[$key]["table"] = $value["table"];
                 }
 
-
-                if (!isset($tableInfo["parent_table"]) || is_null($tableInfo["parent_table"][$value["table"]]))
+			  	if (!isset($tableInfo["parent_table"]) || !isset($tableInfo["parent_table"][$value["table"]]) || is_null($tableInfo["parent_table"][$value["table"]]))
                 {
                     $tableInfo["parent_key"][$value["table"]] = $key;
                     $tableInfo["parent_table"][$value["table"]] = $parenttable;
