@@ -92,7 +92,7 @@ class XML_sql2xml {
 
     /**
     * Options to be used in extended Classes (for example in sql2xml_ext).
-    * They are passed with SetOptions as an array (arrary("user_optpaions" = array());
+    * They are passed with SetOptions as an array (arrary("user_options" = array());
     *  and can then be accessed with $this->user_options["bla"] from your
     *  extended classes for additional features.
     *  This array is not use in this base class, it's only for passing easy parameters
@@ -161,16 +161,16 @@ class XML_sql2xml {
     /**
     * the encoding type, the input from the db has
     */
-    var $encoding_from  = "ISO-8859-1";    
+    var $encoding_from  = "ISO-8859-1";
 
     /**
-    * the encoding type, the output in the xml should have 
+    * the encoding type, the output in the xml should have
     * (note that domxml at the moment only support UTF-8, or at least it looks like)
-    */  
+    */
     var $encoding_to = "UTF-8";
 
     var $tagname = "tagname";
-        
+
     /**
     * Constructor
     * The Constructor can take a Pear::DB "data source name" (eg.
@@ -220,10 +220,10 @@ class XML_sql2xml {
 
         //oehm, seems not to work, unfortunately.... does anybody know a solution?
         $this->xmldoc->encoding = $this->encoding_to;
-        
+
         if ($root) {
             $this->xmlroot = $this->xmldoc->add_root($root);
-            //PHP 4.0.6 had $root->name as tagname, check for that here...            
+            //PHP 4.0.6 had $root->name as tagname, check for that here...
             if (!isset($this->xmlroot->{$this->tagname}))
             {
                 $this->tagname = "name";
@@ -239,16 +239,17 @@ class XML_sql2xml {
     *  input and adds this to $this->xmldoc
     *
     * @param    $resultset string sql-string, or object db_result, or array
+    * @param    $param mixed additional parameters for the following functions
     * @access   public
-    * @see      addResult(), addSql(), addArray()
+    * @see      addResult(), addSql(), addArray(), addXmlFile()
     */
-    function add ($resultset)
+    function add ($resultset,$params=Null)
     {
 
         // if string, then it's a query, a xml-file or a xml-string...
         if (is_string($resultset)) {
             if (preg_match("/\.xml$/",$resultset)) {
-                $this->AddXmlFile($resultset);
+                $this->AddXmlFile($resultset,$params);
             }
             elseif (preg_match("/.*select.*from.*/i" ,  $resultset)) {
                 $this->AddSql($resultset);
@@ -273,16 +274,17 @@ class XML_sql2xml {
     * as a normal resultset (mostly just below <root>)
     *
     * @param    string filename
+    * @param    mixed xpath  either a string with the xpath expression or an array with "xpath"=>xpath expression  and "root"=tag/subtag/etc, which are the tags to be inserted before the result
     * @access   public
     * @see      doXmlString2Xml()
     */
 
-    function addXmlFile($file)
+    function addXmlFile($file,$xpath = Null)
     {
         $fd = fopen( $file, "r" );
         $content = fread( $fd, filesize( $file ) );
         fclose( $fd );
-        $this->doXmlString2Xml($content);
+        $this->doXmlString2Xml($content,$xpath);
     }
 
     /**
@@ -290,12 +292,13 @@ class XML_sql2xml {
     * as a normal resultset (mostly just below <root>)
     *
     * @param    string xml
+    * @param    mixed xpath  either a string with the xpath expression or an array with "xpath"=>xpath expression  and "root"=tag/subtag/etc, which are the tags to be inserted before the result
     * @access   public
     * @see      doXmlString2Xml()
     */
-    function addXmlString($string)
+    function addXmlString($string,$xpath = Null)
     {
-        $this->doXmlString2Xml($string);
+        $this->doXmlString2Xml($string,$xpath);
     }
 
     /**
@@ -320,10 +323,20 @@ class XML_sql2xml {
     */
     function addSql($sql)
     {
+        /* if there are {} expressions in the sql query, we assume it's an xpath expression to
+        *   be evaluated.
+        */
 
+        if (preg_match_all ("/\{([^\}]+)\}/i",$sql,$matches))
+        {
+            foreach ($matches[1] as $match)
+            {
+                $sql = preg_replace("#\{".preg_quote($match)."\}#  ", $this->getXpathValue($match),$sql);
+            }
+        }
         $result = $this->db->query($sql);
 
-        //very strange                
+        //very strange
         if (PEAR::isError($result->result)) {
                  print "You have an SQL-Error:<br>".$result->result->userinfo;
                  print "<br>";
@@ -455,7 +468,7 @@ class XML_sql2xml {
             //if you need more tableInfo for later use you can write a function addTableInfo..
             $this->addTableInfo($key, $value, &$tableInfo);
         }
- 
+
         // end initialize
 
         // if user made some own tableInfo data, merge them here.
@@ -466,21 +479,21 @@ class XML_sql2xml {
         $parent['root'] = $this->insertNewResult(&$tableInfo);
 
         //initialize $resold to get rid of warning messages;
-        $resold[0] = "ThisValueIsImpossibleForTheFirstFieldInTheFirstRow";  
+        $resold[0] = "ThisValueIsImpossibleForTheFirstFieldInTheFirstRow";
 
         while ($FirstFetchDone == True || $res = $result->FetchRow($fetchmode))
         {
-           
+
             //FirstFetchDone is only for emulating tableInfo, as long as not all dbs support tableInfo. can go away later
             $FirstFetchDone = False;
-    
+
             while (list($key, $val) = each($res))
             {
 
                 if ($resold[$tableInfo["parent_key"][$tableInfo[$key]["table"]]] != $res[$tableInfo["parent_key"][$tableInfo[$key]["table"]]] || !$this->nested)
                 {
                     if ($tableInfo["parent_key"][$tableInfo[$key]["table"]] == $key )
-                    {                
+                    {
                         if ($this->nested || $key == 0)
                         {
 
@@ -501,7 +514,7 @@ class XML_sql2xml {
                         }
 
                     }
-                    if ( $parent[$tableInfo[$key]["table"]] != Null) 
+                    if ( $parent[$tableInfo[$key]["table"]] != Null)
                     {
                         $this->insertNewElement($parent[$tableInfo[$key]["table"]], $res, $key, &$tableInfo, &$subrow);
                     }
@@ -583,20 +596,20 @@ class XML_sql2xml {
         {
             foreach ($options as $option => $value)
             {
-               if (isset($this->{$option})) 
+               if (isset($this->{$option}))
                 {
-                    if (is_array($value) && ! $delete) 
+                    if (is_array($value) && ! $delete)
                     {
                         foreach ($value as $suboption => $subvalue)
                         {
                             $this->{$option}["$suboption"] = $subvalue;
                         }
                     }
-                    else 
+                    else
                     {
-                          $this->$option = $value;   
+                          $this->$option = $value;
                     }
-                }    
+                }
             }
         }
     }
@@ -617,7 +630,7 @@ class XML_sql2xml {
         else
         {
             $this->xmlroot = $this->xmldoc->add_root($this->tagNameResult);
-            //PHP 4.0.6 had $root->name as tagname, check for that here...            
+            //PHP 4.0.6 had $root->name as tagname, check for that here...
             if (!isset($this->xmlroot->{$this->tagname}))
             {
                 $this->tagname = "name";
@@ -678,7 +691,7 @@ class XML_sql2xml {
     // here come some helper functions...
 
     /**
-    * make utf8 out of the input data and escape & with &amp; and "< " with "&lt; " 
+    * make utf8 out of the input data and escape & with &amp; and "< " with "&lt; "
     * (we assume that when there's no space after < it's a tag, which we need in the xml)
     *  I'm not sure, if this is the standard way, but it works for me.
     *
@@ -701,16 +714,16 @@ class XML_sql2xml {
                 else
                 {
                     $errormsg = "undefined iconv error, turn on track_errors in php.ini to get more details";
-                }            
+                }
                 return PEAR::raiseError($errormsg,Null,PEAR_ERROR_DIE);
-             }   
+             }
              else {
                 return $text;
              }
         }
-        else 
+        else
         {
-            $text = utf8_encode(ereg_replace("&","&amp;",$text));
+            $text = utf8_encode(ereg_replace("&","&amp;",ereg_replace("< ","&lt; ",$text)));
         }
         return $text;
     }
@@ -751,31 +764,87 @@ class XML_sql2xml {
     /**
     * Adds a xml string to $this->xmldoc.
     * It's inserted on the same level as a "normal" resultset, means just as a children of <root>
-    *
+    * if a xpath expression is supplied, it takes that for selecting only part of the xml-file
+    * 
+    * the clean code works only with php 4.0.7
+    * for php4.0.6 :
     * I found no cleaner method than the below one. it's maybe nasty (xmlObject->string->xmlObject),
     *  but it works. If someone knows how to add whole DomNodes to another one, let me know...
     *
     * @param    string xml string
+    * @param    mixed xpath  either a string with the xpath expression or an array with "xpath"=>xpath expression  and "root"=tag/subtag/etc, which are the tags to be inserted before the result
     * @acces private
     */
 
-    function doXmlString2Xml ($string)
+    function doXmlString2Xml ($string,$xpath = Null)
     {
-        $MainXmlString = $this->xmldoc->dumpmem();
+ 
+        //check if we have a recent domxml. otherwise use the workaround...
+        $version = explode(".",phpversion());
+        if (! ($version[0] <= 4 and $version[1] <= 0 and $version[2] < 7) ){
+        
+            if (is_array($xpath))
+            { 
+                if (isset($xpath["root"]))
+                {
+                    $root = $xpath["root"];
+                }
+                $xpath = $xpath["xpath"];
+            }
+            
+            $tmpxml = xmldoc($string);
+            $subroot = $this->xmlroot;
+            if (isset($root)) 
+            {   
+                $roots = explode("/",$root);
+                foreach ($roots as $rootelement)
+                {
+                    if ( strlen($rootelement) > 0 )
+                    {
+                        print "$rootelement<br>";
+                        $subroot = $subroot->new_child($rootelement,"");
+                    }
+                }
+            }
+            
+            
+            //$this->xmlroot->addchild does some strange things when added nodes from xpath.... so this comment helps out
+            $newchild = $subroot->add_child($this->xmldoc->create_comment("the purpose of this comment was a workaround in sql2php.php line ".__LINE__));
 
-        $string = preg_replace("/<\?xml.*\?>/","",$string);
+            
+            // if no xpath is given, just take the whole file
+            if ( (is_null($xpath)))
+            {
+                $newchild->append_child($tmpxml->root());
+            }
+            else 
+            {
+                $xctx = $tmpxml->xpath_new_context();
+                $xnode = xpath_eval($xctx,$xpath);
+                debug::print_rp($xnode);
+                foreach ($xnode->nodeset as $node)
+                {
+                    $newchild->append_child($node);
+                }
+            }
+         }
+        else {
+            $MainXmlString = $this->xmldoc->dumpmem();
+            $string = preg_replace("/<\?xml.*\?>/","",$string);
 
-        $MainXmlString = preg_replace("/<".$this->xmlroot->{$this->tagname}."\/>/","<".$this->xmlroot->{$this->tagname}."></".$this->xmlroot->{$this->tagname}.">",$MainXmlString);
-        $MainXmlString = preg_replace("/<\/".$this->xmlroot->{$this->tagname}.">/",$string."</".$this->xmlroot->{$this->tagname}.">",$MainXmlString);
+            $MainXmlString = preg_replace("/<".$this->xmlroot->{$this->tagname}."\/>/","<".$this->xmlroot->{$this->tagname}."></".$this->xmlroot->{$this->tagname}.">",$MainXmlString);
+            $MainXmlString = preg_replace("/<\/".$this->xmlroot->{$this->tagname}.">/",$string."</".$this->xmlroot->{$this->tagname}.">",$MainXmlString);
 
-        $this->xmldoc = xmldoc($MainXmlString);
-        $this->xmlroot = $this->xmldoc->root();
+            $this->xmldoc = xmldoc($MainXmlString);
+            $this->xmlroot = $this->xmldoc->root();
+         
+        }
     }
 
     /**
     * sets the encoding for the db2xml transformation
     * @param    string encoding to transform from
-    * @param    string encoding to transform to    
+    * @param    string encoding to transform to
     * @acces public
     */
     function setEncoding ($encoding_from = "ISO-8859-1", $encoding_to ="UTF-8")
@@ -783,6 +852,58 @@ class XML_sql2xml {
         $this->encoding_from = $encoding_from;
         $this->encoding_to = $encoding_to;
     }
-    
+
+    function SetParentTables($parentTables)
+    {
+        foreach ($parentTables as $table => $parent)
+        {
+            $table_info["parent_table"][$table]=$parent;
+        }
+        $this->SetOptions(array("user_tableInfo"=>$table_info));
+    }
+
+    // returns the content of the first match of the xpath expression
+    function getXpathValue ($expr)
+    {
+
+        $xpth = $this->xmldoc->xpath_new_context();
+        $xnode = xpath_eval($xpth,$expr);
+
+        if (isset ($xnode->nodeset[0]))
+        {
+            $firstnode = $xnode->nodeset[0];
+
+            $children = $firstnode->children();
+            $value = $children[0]->content;
+                return $value;
+        }
+
+        else
+        {
+            return Null;
+        }
+    }
+
+    // get the values as an array from the childtags from the first match of the xpath expression
+    function getXpathChildValues ($expr)
+    {
+        $xpth = $this->xmldoc->xpath_new_context();
+        $xnode = xpath_eval($xpth,$expr);
+
+        if (isset ($xnode->nodeset[0]))
+        {
+            foreach ($xnode->nodeset[0]->children() as $child)
+            {
+                $children = $child->children();
+                $value[$child->{$this->tagname}] = $children[0]->content;
+            }
+            return $value;
+        }
+        else
+        {
+            return Null;
+        }
+    }
+
 }
 ?>

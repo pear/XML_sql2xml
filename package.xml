@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 <!-- do not use the "Type" attribute here, that one is only for
      generated package.xml files -->
-<Package>
-  <Name>XML_sql2xml</Name>
-  <Summary>This class takes a PEAR::DB-Result Object, a sql-query-string, an array and/or an xml-string/file and returns a xml-representation of it.</Summary>
-  <Maintainer>
-    <Initials>cs</Initials>
-    <Name>Christian Stocker</Name>
-    <Email>chregu@php.net</Email>
-  </Maintainer>
-  <Release>
-    <Version>0.3</Version>
-    <Date>2001-08-17</Date>
-    <Notes>
+<package>
+  <name>XML_sql2xml</name>
+  <summary>This class takes a PEAR::DB-Result Object, a sql-query-string, an array and/or an xml-string/file and returns a xml-representation of it.</summary>
+  <maintainer>
+    <initials>cs</initials>
+    <name>Christian Stocker</name>
+    <email>chregu@php.net</email>
+  </maintainer>
+  <release>
+    <version>0.3</version>
+    <date>2001-08-17</date>
+    <notes>
 	New Features:
 	- works with PHP 4.0.7 and below
 	- Adding of XML-files/strings is possible
@@ -23,13 +23,14 @@
 	- user_option selected_id can take the arguments first and all
 	BugFixes
 	- sql selects are recognized with capitals as well
-	- if there was a < in the database it gave an xml-error, now "< " is "escaped"
-    </Notes>
-  </Release>
-  <FileList>
-    <Dir Name="XML" BaseInstallDir="XML" >
-      <File Role="php">sql2xml.php</File>
-      <File Role="php">sql2xml_ext.php</File>
-    </Dir>
-  </FileList>
-</Package>
+	- if there was a [lesserthan] in the database it gave an xml-error, now "[lesserthan] " is "escaped"
+	- xpath support for sql-queries and xml-files to be inserted
+    </notes>
+  </release>
+  <filelist>
+    <dir name="XML" baseinstalldir="XML">
+      <file role="php">sql2xml.php</file>
+      <file role="php">sql2xml_ext.php</file>
+    </dir>
+  </filelist>
+</package>

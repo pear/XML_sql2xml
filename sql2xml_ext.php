@@ -94,7 +94,7 @@ class XML_sql2xml_ext extends XML_sql2xml {
         if ($res[$tableInfo["id"][$tableInfo[$key]["table"]]] == $this->user_options['selected_id']
             || $tableInfo[$key]["table"].$res[$tableInfo["id"][$tableInfo[$key]["table"]]] == $this->user_options['selected_id']
             || (is_array($this->user_options['selected_id']) && in_array($tableInfo[$key]["table"].$res[$tableInfo["id"][$tableInfo[$key]["table"]]],$this->user_options['selected_id']))
-            ||    $this->user_options['selected_id'] == "all" 
+            ||    $this->user_options['selected_id'] == "all"
             ||  ($this->user_options['selected_id'] == "first") && !isset($this->table_selected[$tableInfo[$key]["table"]])
            )
             {
@@ -128,7 +128,6 @@ class XML_sql2xml_ext extends XML_sql2xml {
         else
             $xmlroot= $this->xmldoc->add_root($result_root);
         $this->SetAttribute($xmlroot,"type","resultset");
-
         return $xmlroot;
     }
 
@@ -143,7 +142,7 @@ class XML_sql2xml_ext extends XML_sql2xml {
            // initialize some variables to get rid of warning messages
             $beforetags = "";
             $before[-1] = Null;
-            //the preg should be only done once...            
+            //the preg should be only done once...
             $i = 0;
             preg_match_all("/([^" . $this->user_options["xml_seperator"] . "]+)" . $this->user_options['xml_seperator'] . "*/", $tableInfo[$key]["name"], $regs);
 
@@ -151,7 +150,7 @@ class XML_sql2xml_ext extends XML_sql2xml {
             {
                 $subrow[$regs[1][-1]] = $parent;
             }
-            else 
+            else
             {
                 $subrow[Null] = $parent;
             }
@@ -176,7 +175,7 @@ class XML_sql2xml_ext extends XML_sql2xml {
     }
 
     function addTableinfo($key, $value, &$tableInfo) {
-        
+
         if (!isset($tableInfo['id'][$value["table"]]) && $value["name"] == $this->user_options["element_id"] )
         {
             $tableInfo['id'][$value["table"]]= $key;
@@ -194,6 +193,16 @@ class XML_sql2xml_ext extends XML_sql2xml {
         }
         else {
             return $node->setattr($name,$value);
+        }
+    }
+
+
+    function SetResultRootTag ($resultroot)
+    {
+        if (isset($resultroot))
+        {
+            $options = array("user_options" => array("result_root"=>$resultroot));
+            $this->setoptions($options);
         }
     }
 
