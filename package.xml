@@ -4,11 +4,9 @@
      generated package.xml files -->
 <package version="1.0">
   <name>XML_sql2xml</name>
-  <summary>
-This class takes a PEAR::DB-Result Object, a sql-query-string, an
-array and/or an xml-string/file and returns a xml-representation of
-it.
+  <summary>Returns XML from a SQL-Query.
 </summary>
+<description>This class takes a PEAR::DB-Result Object, a sql-query-string, an array and/or an xml-string/file and returns a xml-representation of it.</description>
   <maintainers>
     <maintainer>
       <user>chregu</user>
@@ -16,9 +14,30 @@ it.
       <email>chregu@php.net</email>
     </maintainer>
   </maintainers>
+   <license>PHP License</license>
   <release>
+    <version>0.3.1</version>
+    <date>2002-11-19</date>
+    <state>beta</state>
+    <notes>
+		- fixed "Call-time pass-by-reference" errors 
+    </notes>
+    <filelist>
+      <dir name="." baseinstalldir="XML">
+	<file role="php">sql2xml.php</file>
+	<file role="php">sql2xml_ext.php</file>
+	<dir name="doc" role="doc">
+	  <file role="doc">tutorial.html</file>
+	  <file role="doc">bands.xml</file>
+	  <file role="doc">xmltest.sql</file>
+	</dir>
+      </dir>
+
+    </filelist>
+  </release>
+  <changelog>
     <version>0.3</version>
-    <date>2001-08-17</date>
+    <date>2002-05-03</date>
     <notes>
 New Features:
 - works with PHP 4.0.7 and below
@@ -34,17 +53,5 @@ New Features:
 - xpath support for sql-queries and xml-files to be inserted (see
   http://php.chregu.tv/sql2xml/#xpath for a little intro about that) 
     </notes>
-    <filelist>
-      <dir name="." baseinstalldir="XML">
-	<file role="php">sql2xml.php</file>
-	<file role="php">sql2xml_ext.php</file>
-	<dir name="doc" role="doc">
-	  <file role="doc">tutorial.html</file>
-	  <file role="doc">bands.xml</file>
-	  <file role="doc">xmltest.sql</file>
-	</dir>
-      </dir>
-
-    </filelist>
-  </release>
+</changelog>
 </package>
