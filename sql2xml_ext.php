@@ -12,7 +12,7 @@
 // | obtain it through the world-wide-web, please send a note to          |
 // | license@php.net so we can mail you a copy immediately.               |
 // +----------------------------------------------------------------------+
-// | Authors: Christian Stocker <chregu@nomad.ch>                         |
+// | Authors: Christian Stocker <chregu@phant.ch>                         |
 // +----------------------------------------------------------------------+
 //
 // $Id$
@@ -20,24 +20,21 @@
 require_once ("XML/sql2xml.php");
 
 /**
- *  This class shows with a example, how the base sql2xml-class
+ *  This class shows with an example, how the base sql2xml-class
  *   could be extended.
  *
  * Usage example
  *
- * include_once ("DB.php");
  * include_once("XML/sql2xml_ext.php");
- * $xml = new xml_sql2xml_ext;
  * $options= array( user_options => array (xml_seperator =>"_",
  *                                       element_id => "id"),
  * );
- * $db = DB::connect("mysql://root@localhost/xmltest");
- * $xml = new xml_sql2xml;
- * $result = $db->query("select * from bands");
- * $xmlstring = $xml->getxml($result,$options));
+ * $sql2xml = new xml_sql2xml_ext("mysql://root@localhost/xmltest");
+ * $sql2xml->SetOptions($options);
+ * $xmlstring = $sql2xml->getxml("select * from bands");
 
  * more examples and outputs on
- *   http://www.nomad.ch/php/sql2xml/
+ *   http://php.chregu.tv/sql2xml/
  *   for the time being
  *
  * @author   Christian Stocker <chregu@nomad.ch>
@@ -46,27 +43,56 @@ require_once ("XML/sql2xml.php");
 class XML_sql2xml_ext extends XML_sql2xml {
 
 
-    function insertNewRow($parent_row, $res, $key, &$tableInfo)
+    function XML_sql2xml_ext ($dsn=Null,$root = "root")
     {
+        $this->XML_sql2xml($dsn,$root);
+        // DefaultValues for user_options
+
+        $user_options = array (
+               xml_seperator =>"_",
+               element_id => "ID",
+               print_empty_ids => False,
+        );
+
+       $this->setOptions(array("user_options"=>$user_options));
+
+    }
+
+    function insertNewRow ($parent_row, $res, $key, &$tableInfo)
+    {
+        if (!$tableInfo[$key]["table"]) {
+            $tableInfo[$key]["table"] = $this->tagNameResult;
+        }
+        if ($this->user_options[element_id] && !$res[$tableInfo["id"][$tableInfo[$key]["table"]]] && !$this->user_options[print_empty_ids])
+        {
+            return Null;
+        }
 
         $new_row= $parent_row->new_child($tableInfo[$key]["table"],Null);
         /* make an unique ID attribute in the row element with tablename.id if there's an id
                otherwise just make an unique id with the php-function, just that there's a unique id for this row.
                 CAUTION: This ID changes every time ;) (if no id from db-table)
                */
-        $new_row->set_attribute("type","row");
+        $this->SetAttribute($new_row,"type","row");
+
         if ($res[$tableInfo["id"][$tableInfo[$key]["table"]]])
         {
-            if ($res[$tableInfo["id"][$tableInfo[$key]["table"]]] == $this->user_options[id])
+        /* make attribute selected if ID = selected_id OR tableName.ID = selected_id. for the second case
+            you can give an array for multiple selected entries */
+
+        if ($res[$tableInfo["id"][$tableInfo[$key]["table"]]] == $this->user_options[selected_id]
+            || $tableInfo[$key]["table"].$res[$tableInfo["id"][$tableInfo[$key]["table"]]] == $this->user_options[selected_id]
+            || (is_array($this->user_options[selected_id]) && in_array($tableInfo[$key]["table"].$res[$tableInfo["id"][$tableInfo[$key]["table"]]],$this->user_options[selected_id])))
+
             {
-                $new_row->set_attribute("selected", "selected");
+                $this->SetAttribute($new_row,"selected", "selected");
             }
-            $new_row->set_attribute("ID", utf8_encode($tableInfo[$key]["table"] . $res[$tableInfo["id"][$tableInfo[$key]["table"]]]));
+            $this->SetAttribute($new_row,"ID", utf8_encode($tableInfo[$key]["table"] . $res[$tableInfo["id"][$tableInfo[$key]["table"]]]));
         }
         else
         {
             $this->IDcounter[$tableInfo[$key]["table"]]++;
-            $new_row->set_attribute("ID", $tableInfo[$key]["table"].$this->IDcounter[$tableInfo[$key]["table"]]);
+            $this->SetAttribute($new_row,"ID", $tableInfo[$key]["table"].$this->IDcounter[$tableInfo[$key]["table"]]);
 
         }
 
@@ -74,42 +100,49 @@ class XML_sql2xml_ext extends XML_sql2xml {
     }
 
 
-    function insertNewResult(&$tableInfo) {
-        
-        if ($this->user_options["result_root"]) 
+    function insertNewResult (&$tableInfo) {
+
+        if ($this->user_options["result_root"])
             $result_root = $this->user_options["result_root"];
-        else 
+        elseif ($tableInfo[0]["table"])
             $result_root = $tableInfo[0]["table"];
-        
+        else
+            $result_root = "resultset";
+
         if ($this->xmlroot)
             $xmlroot=$this->xmlroot->new_child($result_root,Null);
         else
             $xmlroot= $this->xmldoc->add_root($result_root);
-        $xmlroot->set_attribute("type","resultset");
+        $this->SetAttribute($xmlroot,"type","resultset");
         return $xmlroot;
     }
-    
 
-    function insertNewElement($parent, $res, $key, &$tableInfo, &$subrow) {
+
+    function insertNewElement ($parent, $res, $key, &$tableInfo, &$subrow) {
 
         if (is_array($this->user_options["attributes"]) && in_array($tableInfo[$key]["name"],$this->user_options["attributes"])) {
-            $subrow=$parent->set_attribute($tableInfo[$key]["name"],$this->xml_encode($res[$key]));
+            $subrow=$this->SetAttribute($parent,$tableInfo[$key]["name"],$this->xml_encode($res[$key]));
         }
         elseif ($this->user_options["xml_seperator"])
         {
             //the preg should be only done once....
             $i = 0;
             preg_match_all("/([^" . $this->user_options["xml_seperator"] . "]+)" . $this->user_options[xml_seperator] . "*/", $tableInfo[$key]["name"], $regs);
-            $subrow[$regs[1][-1]] = $parent;
 
+
+
+            $subrow[$regs[1][-1]] = $parent;
             // here we separate db fields to subtags.
             for ($i = 0; $i < (count($regs[1]) - 1); $i++)
             {
-                if ( ! $subrow[$regs[1][$i]]) {
-                    $subrow[$regs[1][$i]] = $subrow[$regs[1][$i - 1]]->new_child($regs[1][$i], NULL);
+                $beforetags .=$regs[1][$i]."_";
+                $before[$i] = $beforetags;
+                if ( ! $subrow[$before[$i]] ) {
+                    $subrow[$before[$i]] = $subrow[$before[$i - 1]]->new_child($regs[1][$i], NULL);
                 }
             }
-            $subrows = $subrow[$regs[1][$i - 1]]->new_child($regs[1][$i], $this->xml_encode($res[$key]));
+            $subrows = $subrow[$before[$i - 1]]->new_child($regs[1][$i], $this->xml_encode($res[$key]));
+
         }
         else
         {
@@ -127,5 +160,17 @@ class XML_sql2xml_ext extends XML_sql2xml {
             $tableInfo[$key]["name"] = $this->user_options["field_translate"][$value["name"]];
         }
     }
+
+    // A wrapper for set setattr/set_attribute, since the function changed in php 4.0.6...
+    function SetAttribute ($node,$name,$value) {
+        if (method_exists($node,"Set_attribute"))
+        {
+            return $node->Set_Attribute($name,$value);
+        }
+        else {
+            return $node->setattr($name,$value);
+        }
+    }
+
 }
 ?>

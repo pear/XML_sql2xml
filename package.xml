@@ -3,18 +3,20 @@
      generated package.xml files -->
 <Package>
   <Name>XML_sql2xml</Name>
-  <Summary>This class takes a PEAR::DB-Result Object, a sql-query-string or an array  and returns a xml-representation of it.</Summary>
+  <Summary>This class takes a PEAR::DB-Result Object, a sql-query-string, an array and/or an xml-string/file and returns a xml-representation of it.</Summary>
   <Maintainer>
     <Initials>cs</Initials>
     <Name>Christian Stocker</Name>
     <Email>chregu@php.net</Email>
   </Maintainer>
   <Release>
-    <Version>0.1</Version>
-    <Date>2001-08-03</Date>
+    <Version>0.2</Version>
+    <Date>2001-08-16</Date>
     <Notes>
-	Documentation is in the php-file itself.
-	API may change.
+	New Features:
+	- Adding of XML-files/strings is possible
+	- works with 4.0.6 and below
+        - setOption can delete values set before.
     </Notes>
   </Release>
   <FileList>

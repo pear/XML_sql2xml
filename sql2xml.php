@@ -12,7 +12,7 @@
 // | obtain it through the world-wide-web, please send a note to          |
 // | license@php.net so we can mail you a copy immediately.               |
 // +----------------------------------------------------------------------+
-// | Authors: Christian Stocker <chregu@nomad.ch>                         |
+// | Authors: Christian Stocker <chregu@phant.ch>                         |
 // +----------------------------------------------------------------------+
 //
 // $Id$
@@ -43,7 +43,7 @@
 * $xmlstring = $sql2xml->getXML();
 *
 * More documentation and a tutorial/how-to can be found at
-*   http://www.nomad.ch/php/sql2xml
+*   http://php.chregu.tv/sql2xml
 *
 * @author   Christian Stocker <chregu@nomad.ch>
 * @version  $Id$
@@ -113,6 +113,7 @@ class XML_sql2xml {
     /**
     * The Root of the domxml object
     * I'm not sure, if we need this as a class variable....
+    * could be replaced by domxml_root($this->xmldoc);
     *
     * @var      object DomNode
     * @acces    private
@@ -176,6 +177,7 @@ class XML_sql2xml {
     function XML_sql2xml ($dsn=Null,$root = "root") {
 
         // if it's a string, then it must be a dsn-identifier;
+
         if (is_string($dsn))
         {
             include_once ("DB.php");
@@ -188,7 +190,7 @@ class XML_sql2xml {
 
         }
 
-        elseif (DB::isError($dsn))
+        elseif (is_object($dsn) && DB::isError($dsn))
         {
             print "The given param for XML_sql2xml was not valid in file ".__FILE__." at line ".__LINE__."<br>\n";
             return new DB_Error($dsn->code,PEAR_ERROR_DIE);
@@ -199,7 +201,6 @@ class XML_sql2xml {
         {
             $this->db = $dsn;
         }
-
 
         $this->xmldoc = domxml_new_xmldoc('1.0');
         if ($root) {
@@ -220,9 +221,18 @@ class XML_sql2xml {
     */
     function add ($resultset)
     {
-        // if string, then it's a query...
+        // if string, then it's a query, a xml-file or a xml-string...
         if (is_string($resultset)) {
-            $this->AddSql($resultset);
+            if (preg_match("/\.xml$/",$resultset)) {
+                $this->AddXmlFile($resultset);
+            }
+            elseif (preg_match("/.*select.*from.*/" ,  $resultset)) {
+                $this->AddSql($resultset);
+            }
+            else {
+                $this->AddXmlString($resultset);
+            }
+
         }
         // if array, then it's an array...
         elseif (is_array($resultset)) {
@@ -232,6 +242,36 @@ class XML_sql2xml {
         if (get_class($resultset) == "db_result") {
             $this->AddResult($resultset);
         }
+    }
+
+    /**
+    * Adds the content of a xml-file to $this->xmldoc, on the same level
+    * as a normal resultset (mostly just below <root>)
+    *
+    * @param    string filename
+    * @access   public
+    * @see      doXmlString2Xml()
+    */
+
+    function addXmlFile($file)
+    {
+        $fd = fopen( $file, "r" );
+        $content = fread( $fd, filesize( $file ) );
+        fclose( $fd );
+        $this->doXmlString2Xml($content);
+    }
+
+    /**
+    * Adds the content of a xml-string to $this->xmldoc, on the same level
+    * as a normal resultset (mostly just below <root>)
+    *
+    * @param    string xml
+    * @access   public
+    * @see      doXmlString2Xml()
+    */
+    function addXmlString($string)
+    {
+        $this->doXmlString2Xml($string);
     }
 
     /**
@@ -256,7 +296,16 @@ class XML_sql2xml {
     */
     function addSql($sql)
     {
+
         $result = $this->db->query($sql);
+
+        //very strange                
+        if (PEAR::isError($result->result)) {
+                 print "You have an SQL-Error:<br>".$result->result->userinfo;
+                 print "<br>";
+                new DB_Error($result->result->code,PEAR_ERROR_DIE);
+        }
+
         $this->doSql2Xml($result);
     }
 
@@ -288,7 +337,8 @@ class XML_sql2xml {
     */
     function getXML($result = Null)
     {
-        return domxml_dumpmem($this->getXMLObject($result));
+        $xmldoc = $this->getXMLObject($result);
+        return $xmldoc->dumpmem();
     }
 
     /**
@@ -321,6 +371,7 @@ class XML_sql2xml {
 
         if (DB::IsError($result)) {
             print "Error in file ".__FILE__." at line ".__LINE__."<br>\n";
+            print $result->userinfo."<br>\n";
             new DB_Error($result->code,PEAR_ERROR_DIE);
         }
 
@@ -328,6 +379,7 @@ class XML_sql2xml {
         // (should be in 4.0.6)
         // BE CAREFUL: if you have fields with the same name in different tables, you will get errors
         // later, since DB_FETCHMODE_ASSOC doesn't differentiate that stuff.
+        $this->LastResult = &$result;
 
         if (!method_exists($result,"tableInfo") || ! ($tableInfo = $result->tableInfo(False)))
         {
@@ -356,21 +408,30 @@ class XML_sql2xml {
         // initialize db hierarchy...
         $parenttable = "root";
         $tableInfo["parent_key"]["root"] = 0;
+
         foreach ($tableInfo as $key => $value)
         {
             if (is_int($key))
             {
+                // if the sql-query had a function the table starts with a # (only in mysql i think....), then give the field the name of the table before...
+                if (preg_match ("/^#/",$value["table"]) || strlen($value["table"]) == 0) {
+                     $value["table"] = $tableInfo[($key - 1)]["table"] ;
+                    $tableInfo[$key]["table"] = $value["table"];
+                }
+
+
                 if (is_null($tableInfo["parent_table"][$value["table"]]))
                 {
                     $tableInfo["parent_key"][$value["table"]] = $key;
                     $tableInfo["parent_table"][$value["table"]] = $parenttable;
                     $parenttable = $value["table"] ;
                 }
+
             }
             //if you need more tableInfo for later use you can write a function addTableInfo..
             $this->addTableInfo($key, $value, &$tableInfo);
         }
-
+ 
         // end initialize
 
         // if user made some own tableInfo data, merge them here.
@@ -379,7 +440,7 @@ class XML_sql2xml {
             $tableInfo = $this->array_merge_clobber($tableInfo,$this->user_tableInfo);
         }
         $parent[root] = $this->insertNewResult(&$tableInfo);
-
+      
         while ($FirstFetchDone || $res = $result->FetchRow($fetchmode))
         {
             //FirstFetchDone is only for emulating tableInfo, as long as not all dbs support tableInfo. can go away later
@@ -410,9 +471,10 @@ class XML_sql2xml {
                         }
 
                     }
-
-                    $this->insertNewElement($parent[$tableInfo[$key]["table"]], $res, $key, &$tableInfo, &$subrow);
-
+                    if ( $parent[$tableInfo[$key]["table"]] != Null) 
+                    {
+                        $this->insertNewElement($parent[$tableInfo[$key]["table"]], $res, $key, &$tableInfo, &$subrow);
+                    }
 
                 }
             }
@@ -422,6 +484,8 @@ class XML_sql2xml {
         }
         return $this->xmldoc;
     }
+
+
 
     /**
     * For adding whole arrays to $this->xmldoc
@@ -433,16 +497,17 @@ class XML_sql2xml {
     */
 
     function DoArray2Xml ($array, $parent) {
+
         while (list($key, $val) = each($array))
             {
                 $tableInfo[$key]["table"]= $this->tagNameResult;
                 $tableInfo[$key]["name"] = $key;
             }
+
         if ($this->user_tableInfo)
         {
             $tableInfo = $this->array_merge_clobber($tableInfo,$this->user_tableInfo);
         }
-
         foreach ($array as $key=>$value)
         {
             if (is_array($value) ) {
@@ -454,9 +519,11 @@ class XML_sql2xml {
                 }
                 else
                 {
+
                     $valuenew = $value;
                     $keynew = $key;
                 }
+
                 $rec2 = $this->insertNewRow($parent, $valuenew, $keynew, &$tableInfo);
                 $this->DoArray2xml($value,$rec2);
             }
@@ -475,20 +542,31 @@ class XML_sql2xml {
     *  of this class.
     *
     * @param    array   options to be passed to the class
+    * @param    bool   if the old suboptions should be deleted
     * @access   public
     * @see      $nested,$user_options,$user_tableInfo
     */
 
-    function setOptions($options) {
+    function setOptions($options,$delete = False) {
     //set options
         if (is_array($options))
         {
             foreach ($options as $option => $value)
             {
-                if (isset($this->$option)) {
-                    $this->$option = $value;
-                }
-
+               if (isset($this->{$option})) 
+                {
+                    if (is_array($value) && ! $delete) 
+                    {
+                        foreach ($value as $suboption => $subvalue)
+                        {
+                            $this->{$option}["$suboption"] = $subvalue;
+                        }
+                    }
+                    else 
+                    {
+                          $this->$option = $value;   
+                    }
+                }    
             }
         }
     }
@@ -523,7 +601,7 @@ class XML_sql2xml {
     */
     function insertNewRow($parent_row, $res, $key, &$metadata)
     {
-        return  $parent_row->new_child($this->tagNameRow, NULL);
+        return  $parent_row->new_child($this->tagNameRow, Null);
     }
 
 
@@ -605,5 +683,28 @@ class XML_sql2xml {
         }
         return $newarray;
     }
+
+    /**
+    * Adds a xml string to $this->xmldoc.
+    * It's inserted on the same level as a "normal" resultset, means just as a children of <root>
+    *
+    * I found no cleaner method than the below one. it's maybe nasty (xmlObject->string->xmlObject),
+    *  but it works. If someone knows how to add whole DomNodes to another one, let me know...
+    *
+    * @param    string xml string
+    * @acces private
+    */
+
+    function doXmlString2Xml ($string)
+    {
+        $MainXmlString = $this->xmldoc->dumpmem();
+        $string = preg_replace("/<\?xml.*\?>/","",$string);
+        $MainXmlString = preg_replace("/<".$this->xmlroot->name."\/>/","<".$this->xmlroot->name."></".$this->xmlroot->name.">",$MainXmlString);
+        $MainXmlString = preg_replace("/<\/".$this->xmlroot->name.">/",$string."</".$this->xmlroot->name.">",$MainXmlString);
+        $this->xmldoc = xmldoc($MainXmlString);
+        $this->xmlroot = $this->xmldoc->root();
+    }
+
+
 }
 ?>
