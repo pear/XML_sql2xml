@@ -781,8 +781,9 @@ class XML_sql2xml {
  
         //check if we have a recent domxml. otherwise use the workaround...
         $version = explode(".",phpversion());
+
         if (! ($version[0] <= 4 and $version[1] <= 0 and $version[2] < 7) ){
-        
+
             if (is_array($xpath))
             { 
                 if (isset($xpath["root"]))
@@ -794,6 +795,7 @@ class XML_sql2xml {
             
             $tmpxml = xmldoc($string);
             $subroot = $this->xmlroot;
+
             if (isset($root)) 
             {   
                 $roots = explode("/",$root);
@@ -801,7 +803,6 @@ class XML_sql2xml {
                 {
                     if ( strlen($rootelement) > 0 )
                     {
-                        print "$rootelement<br>";
                         $subroot = $subroot->new_child($rootelement,"");
                     }
                 }
@@ -809,7 +810,7 @@ class XML_sql2xml {
             
             
             //$this->xmlroot->addchild does some strange things when added nodes from xpath.... so this comment helps out
-            $newchild = $subroot->add_child($this->xmldoc->create_comment("the purpose of this comment was a workaround in sql2php.php line ".__LINE__));
+            $newchild = $subroot->add_child($this->xmldoc->create_comment("the purpose of this comment is a workaround in sql2php.php line ".__LINE__));
 
             
             // if no xpath is given, just take the whole file
@@ -821,12 +822,12 @@ class XML_sql2xml {
             {
                 $xctx = $tmpxml->xpath_new_context();
                 $xnode = xpath_eval($xctx,$xpath);
-                debug::print_rp($xnode);
                 foreach ($xnode->nodeset as $node)
                 {
                     $newchild->append_child($node);
                 }
             }
+
          }
         else {
             $MainXmlString = $this->xmldoc->dumpmem();
