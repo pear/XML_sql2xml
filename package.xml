@@ -5,7 +5,7 @@
   <name>XML_sql2xml</name>
   <summary>This class takes a PEAR::DB-Result Object, a sql-query-string, an array and/or an xml-string/file and returns a xml-representation of it.</summary>
   <maintainer>
-    <initials>cs</initials>
+    <user>chregu</user>
     <name>Christian Stocker</name>
     <email>chregu@php.net</email>
   </maintainer>
