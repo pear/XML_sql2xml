@@ -85,7 +85,7 @@ class XML_sql2xml {
     /**
     *
     * @var   object PEAR::DB
-    * @acces private
+    * @access private
     */
     var $db = Null;
 
@@ -107,7 +107,7 @@ class XML_sql2xml {
     * The DomDocument Object to be used in the whole class
     *
     * @var      object  DomDocument
-    * @acces    private
+    * @access    private
     */
     var $xmldoc;
 
@@ -118,7 +118,7 @@ class XML_sql2xml {
     * could be replaced by domxml_root($this->xmldoc);
     *
     * @var      object DomNode
-    * @acces    private
+    * @access    private
     */
     var $xmlroot;
 
@@ -154,7 +154,7 @@ class XML_sql2xml {
     *     $tableInfo["parent_table"][$table]: name of the parent table for $table.
     *
     * @var      array
-    * @acces    private
+    * @access    private
     */
     var $user_tableInfo = array();
 
@@ -185,10 +185,11 @@ class XML_sql2xml {
     *  root element created here, but only when you add a resultset/array/sql-string.
     *  And the first tag of this result is used as the root tag.
     *
-    * @param  $dsn string with PEAR::DB "data source name" or object DB object
-    * @param  $root string of the name of the xml-doc root element.
+    * @param  mixed $dsn    PEAR::DB "data source name" or object DB object
+    * @param  string $root  the name of the xml-doc root element.
+    * @access   public
     */
-    function XML_sql2xml ($dsn=Null,$root = "root") {
+    function XML_sql2xml ($dsn = Null, $root = "root") {
 
         // if it's a string, then it must be a dsn-identifier;
 
@@ -238,12 +239,12 @@ class XML_sql2xml {
     *  input parameter, and the method calls the appropriate method for this
     *  input and adds this to $this->xmldoc
     *
-    * @param    $resultset string sql-string, or object db_result, or array
-    * @param    $param mixed additional parameters for the following functions
+    * @param    string sql-string, or object db_result, or array
+    * @param    mixed additional parameters for the following functions
     * @access   public
     * @see      addResult(), addSql(), addArray(), addXmlFile()
     */
-    function add ($resultset,$params=Null)
+    function add ($resultset, $params = Null)
     {
 
         // if string, then it's a query, a xml-file or a xml-string...
@@ -368,7 +369,7 @@ class XML_sql2xml {
     * in your xml, then you have to provide each of them with add() before you
     * call getXML, but the last one can also be provided here.
     *
-    * @param    Object  result result from a DB-query
+    * @param    mixed  $result result Object from a DB-query
     * @return   string  xml
     * @access   public
     */
@@ -385,7 +386,7 @@ class XML_sql2xml {
     * in your xml, then you have to provide each of them with add() before you
     * call getXMLObject, but the last one can also be provided here.
     *
-    * @param    Object result result from a DB-query
+    * @param    mixed $result result Object from a DB-query
     * @return   Object DomDocument
     * @access   public
     */
@@ -585,7 +586,7 @@ class XML_sql2xml {
     *  of this class.
     *
     * @param    array   options to be passed to the class
-    * @param    bool   if the old suboptions should be deleted
+    * @param    boolean   if the old suboptions should be deleted
     * @access   public
     * @see      $nested,$user_options,$user_tableInfo
     */
@@ -618,9 +619,8 @@ class XML_sql2xml {
 
     /**
     *
-    * @param
+    * @param    mixed
     * @return   object  DomNode
-    * @abstract
     * @access   private
     */
     function insertNewResult(&$metadata)
@@ -642,14 +642,14 @@ class XML_sql2xml {
 
 
     /**
+    *   to be written
     *
-    * @param    object  DomNode
-    * @param
-    * @param
-    * @param
-    * @return
-    * @abstract
-    * @acces private
+    * @param    object DomNode $parent_row
+    * @param    mixed $res
+    * @param    mixed $key
+    * @param    mixed &metadata
+    * @return   object DomNode
+    * @access private
     */
     function insertNewRow($parent_row, $res, $key, &$metadata)
     {
@@ -658,15 +658,15 @@ class XML_sql2xml {
 
 
     /**
+    *   to be written
     *
-    * @param    object  DomNode
-    * @param
-    * @param
-    * @param
-    * @param
-    * @return
-    * @abstract
-    * @acces private
+    * @param    object DomNode $parent
+    * @param    mixed $res
+    * @param    mixed $key
+    * @param    mixed &$metadata
+    * @param    mixed &$subrow
+    * @return   object DomNode
+    * @access private
     */
     function insertNewElement($parent, $res, $key, &$metadata, &$subrow)
     {
@@ -675,12 +675,12 @@ class XML_sql2xml {
 
 
     /**
+    *   to be written
     *
-    * @param
-    * @param
-    * @param
-    * @abstract
-    * @acces private
+    * @param    mixed $key
+    * @param    mixed $value
+    * @param    mixed &$metadata
+    * @access private
     */
     function addTableInfo($key, $value, &$metadata) {
 
@@ -696,7 +696,7 @@ class XML_sql2xml {
     *  I'm not sure, if this is the standard way, but it works for me.
     *
     * @param    string text to be utfed.
-    * @acces private
+    * @access private
     */
     function xml_encode ($text)
     {
@@ -741,7 +741,7 @@ class XML_sql2xml {
     * @param    array first array to be merged
     * @param    array second array to be merged
     * @return   array merged array
-    * @acces private
+    * @access private
     */
     function array_merge_clobber($a1,$a2)
     {
@@ -765,7 +765,7 @@ class XML_sql2xml {
     * Adds a xml string to $this->xmldoc.
     * It's inserted on the same level as a "normal" resultset, means just as a children of <root>
     * if a xpath expression is supplied, it takes that for selecting only part of the xml-file
-    * 
+    *
     * the clean code works only with php 4.0.7
     * for php4.0.6 :
     * I found no cleaner method than the below one. it's maybe nasty (xmlObject->string->xmlObject),
@@ -773,31 +773,31 @@ class XML_sql2xml {
     *
     * @param    string xml string
     * @param    mixed xpath  either a string with the xpath expression or an array with "xpath"=>xpath expression  and "root"=tag/subtag/etc, which are the tags to be inserted before the result
-    * @acces private
+    * @access private
     */
 
     function doXmlString2Xml ($string,$xpath = Null)
     {
- 
+
         //check if we have a recent domxml. otherwise use the workaround...
         $version = explode(".",phpversion());
 
         if (! ($version[0] <= 4 and $version[1] <= 0 and $version[2] < 7) ){
 
             if (is_array($xpath))
-            { 
+            {
                 if (isset($xpath["root"]))
                 {
                     $root = $xpath["root"];
                 }
                 $xpath = $xpath["xpath"];
             }
-            
+
             $tmpxml = xmldoc($string);
             $subroot = $this->xmlroot;
 
-            if (isset($root)) 
-            {   
+            if (isset($root))
+            {
                 $roots = explode("/",$root);
                 foreach ($roots as $rootelement)
                 {
@@ -807,18 +807,18 @@ class XML_sql2xml {
                     }
                 }
             }
-            
-            
+
+
             //$this->xmlroot->addchild does some strange things when added nodes from xpath.... so this comment helps out
             $newchild = $subroot->add_child($this->xmldoc->create_comment("the purpose of this comment is a workaround in sql2php.php line ".__LINE__));
 
-            
+
             // if no xpath is given, just take the whole file
             if ( (is_null($xpath)))
             {
                 $newchild->append_child($tmpxml->root());
             }
-            else 
+            else
             {
                 $xctx = $tmpxml->xpath_new_context();
                 $xnode = xpath_eval($xctx,$xpath);
@@ -838,21 +838,25 @@ class XML_sql2xml {
 
             $this->xmldoc = xmldoc($MainXmlString);
             $this->xmlroot = $this->xmldoc->root();
-         
+
         }
     }
 
     /**
     * sets the encoding for the db2xml transformation
-    * @param    string encoding to transform from
-    * @param    string encoding to transform to
-    * @acces public
+    * @param    string $encoding_from encoding to transform from
+    * @param    string $encoding_to encoding to transform to
+    * @access public
     */
     function setEncoding ($encoding_from = "ISO-8859-1", $encoding_to ="UTF-8")
     {
         $this->encoding_from = $encoding_from;
         $this->encoding_to = $encoding_to;
     }
+    /**
+    * @param array $parentTables parent to child relation
+    * @access public
+    */
 
     function SetParentTables($parentTables)
     {
@@ -863,7 +867,15 @@ class XML_sql2xml {
         $this->SetOptions(array("user_tableInfo"=>$table_info));
     }
 
-    // returns the content of the first match of the xpath expression
+
+    /**
+    * returns the content of the first match of the xpath expression
+    *
+    * @param    string $expr xpath expression
+    * @return   mixed content of the evaluated xpath expression
+    * @access   public
+    */
+
     function getXpathValue ($expr)
     {
 
@@ -885,7 +897,14 @@ class XML_sql2xml {
         }
     }
 
-    // get the values as an array from the childtags from the first match of the xpath expression
+    /**
+    * get the values as an array from the childtags from the first match of the xpath expression
+    *
+    * @param    string xpath expression
+    * @return   array with key->value of subtags
+    * @access   public
+    */
+
     function getXpathChildValues ($expr)
     {
         $xpth = $this->xmldoc->xpath_new_context();

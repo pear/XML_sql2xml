@@ -42,7 +42,25 @@ require_once ("XML/sql2xml.php");
  */
 class XML_sql2xml_ext extends XML_sql2xml {
 
-
+/**
+    * Constructor
+    * The Constructor can take a Pear::DB "data source name" (eg.
+    *  "mysql://user:passwd@localhost/dbname") and will then connect
+    *  to the DB, or a PEAR::DB object link, if you already connected
+    *  the db before.
+    "  If you provide nothing as $dsn, you only can later add stuff with
+    *   a pear::db-resultset or as an array. providing sql-strings will
+    *   not work.
+    * the $root param is used, if you want to provide another name for your
+    *  root-tag than "root". if you give an empty string (""), there will be no
+    *  root element created here, but only when you add a resultset/array/sql-string.
+    *  And the first tag of this result is used as the root tag.
+    *
+    * @param  string with PEAR::DB "data source name" or object DB object
+    * @param  string of the name of the xml-doc root element.
+    * @access public
+    * @see  XML_sql2xml::XML_sql2xml()
+    */
     function XML_sql2xml_ext ($dsn=Null,$root = "root")
     {
         $this->XML_sql2xml($dsn,$root);
@@ -61,6 +79,12 @@ class XML_sql2xml_ext extends XML_sql2xml {
        $this->setOptions(array("user_options"=>$user_options));
 
     }
+
+    * @param  $dsn string with PEAR::DB "data source name" or object DB object
+    * @param  $root string of the name of the xml-doc root element.
+    * @access public
+    * @see  XML_sql2xml::XML_sql2xml()
+    */
 
     function insertNewRow ($parent_row, $res, $key, &$tableInfo)
     {
