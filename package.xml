@@ -20,17 +20,22 @@
 	- Added possibility of other input encoding schemes than iso-8859-1
 	- print_empty_ids is true by default
 	- added new useroption "TableNameForRowTags"
-	- user_option selected_id can take the arguments first and all
-	BugFixes
+	- user_option selected_id can take the arguments first and all	BugFixes
 	- sql selects are recognized with capitals as well
 	- if there was a [lesserthan] in the database it gave an xml-error, now "[lesserthan] " is "escaped"
-	- xpath support for sql-queries and xml-files to be inserted
+	- xpath support for sql-queries and xml-files to be inserted (see http://php.chregu.tv/sql2xml/#xpath for a little intro about that)
     </notes>
   </release>
   <filelist>
-    <dir name="XML" baseinstalldir="XML">
+    <dir baseinstalldir="XML">
       <file role="php">sql2xml.php</file>
       <file role="php">sql2xml_ext.php</file>
+    <dir name="doc" role="doc">
+	<file>tutorial.html</file>
+	<file>bands.xml</file>
+	<file>xmltest.sql</file>
+     </dir>
     </dir>
+
   </filelist>
 </package>

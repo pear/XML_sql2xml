@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+
+         <bands>
+             <band>
+                 <id>1</id>
+                 <name>The Blabbers</name>
+                 <birth_year>1998</birth_year>
+                 <birth_place>London</birth_place>
+                 <genre>Rock'n'Roll</genre>
+             </band>
+             <band>
+                 <id>2</id>
+                 <name>Only Stupids</name>
+                 <birth_year>1997</birth_year>
+                 <birth_place>New York</birth_place>
+                 <genre>Hip Hop</genre>
+             </band>
+         </bands>
+

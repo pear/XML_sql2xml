@@ -1,0 +1,893 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta name="generator" content="HTML Tidy, see www.w3.org" />
+<title>PEAR/XML/sql2xml-Class</title>
+<style type="text/css">
+
+        <!--
+
+   body { font-family: Arial, Helvetica, sans-serif; }
+   pre { font-family: courier;}
+   code { font-family: courier;}
+    -->
+</style>
+</head>
+<body bgcolor="#ffffff">
+<h1>A little tutorial/howto for XML_sql2xml</h1>
+<h2>Table of Contents</h2>
+
+<a href="#about">What's this all about ?</a>
+<br />
+<a href="#advan">And what's the advantage of this ?</a>
+<br />
+<a href="#doesit">What does it ?</a>
+<br />
+<a href="#getit">How to get it</a>
+<br />
+<a href="#useit">How to use it</a>
+<br />
+
+&nbsp;&nbsp;<a href="#prereq">Prerequisites</a>
+<br />
+
+&nbsp;&nbsp;<a href="#simple">The most simple example</a>
+<br />
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#remarks">Remarks..</a>
+<br />
+
+&nbsp;&nbsp;<a href="#leftjoin">Example with a left join query</a>
+<br />
+
+&nbsp;&nbsp;<a href="#anotherleftjoin">Another Example with a left join query but not nested</a>
+<br />
+
+&nbsp;&nbsp;<a href="#addarray">How to add an array</a>
+<br />
+
+&nbsp;&nbsp;<a href="#moreresult">How to add more than one resultset</a>
+<br />
+
+&nbsp;&nbsp;<a href="#othertags">How to get other tag-names than &lt;row> and &lt;result></a>
+<br />
+
+&nbsp;&nbsp;<a href="#xpath">What's this xpath stuff ?</a>
+<br />
+
+&nbsp;&nbsp;<a href="#tablerelations">How to give your own table-relations-structure </a>
+<br />
+
+&nbsp;&nbsp;<a href="#dbobject">How to use db_result Object instead of a sql-string / pear::db object instead of dsn </a>
+<br />
+
+&nbsp;&nbsp;<a href="#ext">Extending sql2xml </a>
+<br />
+
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#moreext">A more complex example (Using sql2xml_ext)</a>
+<br />
+<a href="#missing">What's missing now </a>
+<br />
+<a href="#end">The End</a>
+<br />
+<h3><a name="about"/>What's this all about ?</h3>
+
+Today, very useful stuff can be done with xml (xsl transformation,
+data-exchange, xml-rpc, etc..), but a lot of information is still
+stored in relational databases. And furthermore, it's not very easy
+to store relational data only into xml (or at least, i didn't find
+out how). Therefore i wrote this little class to transform data
+from a database into xml on the fly.
+
+<h3><a name="advan"/>And what's the advantage of this ?</h3>
+
+As I said, you can still store and retrieve your data in databases
+with the power of sql or use legacy stuff lying around. But you can
+also use the advantages of xml/xsl in your php-scripts.
+
+<h3><a name="doesit"/>What does it ?</h3>
+
+It just takes an sql-query, a pear::db_result or an array and gives
+you back a xml string or object representing the data. You get a
+more or less decent result with just the basic settings, but it's
+also highly configurable, so you can almost get what you want. And
+furthermore, if you have joined queries, this class tries to detect
+the relationship and gives you back a nested xml out of that. This
+does not always work right, but you can customize the relationship
+between the tables, as well. The automatic relationship detection
+does only work with mysql at the moment. But the class itself can
+be used with any db supported by the pear database abstraction
+class. see below for some real examples...
+
+<h3><a name="getit"/>How to get it</h3>
+
+Download the latest pear-stuff from the php-cvs.... If you don't
+know, how to do that, go to <a
+href="http://www.php.net/anoncvs.php">
+http://www.php.net/anoncvs.php</a>. Or you can download the class
+<a href="http://cvs.chregu.tv/snaps/sql2xml.tgz">here</a>. But it's maybe not the same
+version as the one from the cvs. But actually both should
+work.<br />
+You can also watch at the class code directly here:<br />
+<a href="http://php.chregu.tv/?file=XML/sql2xml.php">sql2xml.phps</a><br />
+<a href="http://php.chregu.tv/?file=XML/sql2xml_ext.php">sql2xml_ext.phps</a>
+<p>At the moment, the sql2xml modules are in the
+Experimental-directory, so you have to move those classes to the
+XML/ directory in your default pear-directory. If you downloaded
+the classes from this site, you have to move them also into the
+XML/-directory in the pear-directory<br />
+</p>
+
+<h3><a name="useit"/>How to use it</h3>
+
+<h4><a name="prereq"/>Prerequisites</h4>
+
+You need to have compiled php with --with-domxml. Otherwise this
+class will not work. And you also need the PEAR-libraries in your
+include-path, since sql2xml relies on that (actually only on the DB
+modules..)<br />
+Be aware, that the sql2xml class needs a tableInfo function in
+PEAR::DB to be fully operational. This function will only be
+available after with 4.0.6 or if you use the pear code from the
+cvs. And at the moment, the tableInfo-method is only implemented
+for mysql. <br />
+The sql2xml class tries to simulate this function, if it doesn't
+exist for your RDBMS, but that does not really work for joined
+tables (it can't nest the xml output this way.). I'll come to that
+later in this tutorial
+
+<p />For all the examples in this tutorial, we use the following
+database. The values are meaningless :) A <a href="./xmltest.sql">
+mysql-dump</a> of these tables is also available.
+
+<pre>
+mysql&gt; select * from bands;
++----+--------------+------------+-------------+-------------+
+| id | name         | birth_year | birth_place | genre       |
++----+--------------+------------+-------------+-------------+
+|  1 | The Blabbers |       1998 | London      | Rock'n'Roll |
+|  2 | Only Stupids |       1997 | New York    | Hip Hop     |
++----+--------------+------------+-------------+-------------+
+
+mysql&gt; select * from albums;
++----+---------+------------------+------+-----------------+
+| id | bandsID | title            | year | comment         |
++----+---------+------------------+------+-----------------+
+|  1 |       1 | BlaBla           | 1998 | Their first one |
+|  2 |       1 | More Talks       | 2000 | The second one  |
+|  3 |       2 | All your base... | 1999 | The Classic     |
++----+---------+------------------+------+-----------------+
+
+</pre>
+
+<h4><a name="simple"/>The most simple example</h4>
+
+Let's start with an example. The most simple one, with no joins in
+the query and just using the default values.<br />
+In the first line, we include the class-file. This should be in
+your include-path, but that's maybe obvious :)<br />
+In the second line, we initiate the XML_sql2xml class. As
+parameter, we give a string according to the pear::DB dsn ("data
+source name") specifications. With this, we don't have to make a
+db-link by ourself, because sql2xml handles that. But you can also
+provide a DB-Object, if you already connected to the database
+before, or nothing, if you do not want to give
+sql-queries to sql2xml, but only pear::db_result-Objects or just
+Arrays.<br />
+And in the last line, we finally give the sql-query to the class
+and we get the xmlstring representing your data.
+
+<h6><a name="remarks"/>Remarks..</h6>
+
+There's a second parameter you can give to the constructor. As you
+see in the below example, the root element of the xml-doc is called
+"root". Maybe you don't like that, so you give the name of the
+root-element as a second parameter to the constructor, eg:
+
+<code>$sql2xmlclass = new
+xml_sql2xml("mysql://username:password@localhost/xmltest","anotherrootname");</code>
+
+<p>Or, if you provide an empty string as the second parameter, it
+will not even create a special root-element, but it will take
+&lt;result&gt; as the root element. But be aware, that if you want
+to add more than one resultset to the same xml, you need a special
+root-element. See <a href="#moreresult">"How to add more than one resultset"</a> for details
+about that and look also at <a href="#othertags" />"How to get other tag-names than &lt;row&gt; and &lt;result&gt;"</a>
+for how to change the other tag names (like "result","row", etc..)</p>
+
+If you don't want the xml as string, but as a DomDocument
+Object, just call <code>
+$sql2xmlclass-&gt;getXmlObject("query")</code> instead of
+$sql2xmlclass-&gt;getXml(). <p /><table cellpadding="5" cellspacing="0" border="0" width="100%">
+<tr>
+<td>
+<b>example1.php</b></td>
+</tr>
+<tr>
+<td bgcolor="#E0E0E0">
+<code><font color="#000000">
+<font color="#0000BB">&lt;?php<br></font><font color="#007700">include_once(</font><font color="#DD0000">"XML/sql2xml.php"</font><font color="#007700">);<br></font><font color="#0000BB">$sql2xmlclass&nbsp;</font><font color="#007700">=&nbsp;new&nbsp;</font><font color="#0000BB">xml_sql2xml</font><font color="#007700">(</font><font color="#DD0000">"mysql://username:password@localhost/xmltest"</font><font color="#007700">);<br></font><font color="#0000BB">$xmlstring&nbsp;</font><font color="#007700">=&nbsp;</font><font color="#0000BB">$sql2xmlclass</font><font color="#007700">-&gt;</font><font color="#0000BB">getxml</font><font color="#007700">(</font><font color="#DD0000">"select * from bands"</font><font color="#007700">);<br></font><font color="#0000BB">?&gt;<br></font><br></font>
+</code></td>
+</tr>
+
+<tr>
+<td>
+This example will produce:</td>
+</tr>
+<tr>
+<td bgcolor="#eeeeee">
+$xmlstring = '<pre>&lt;?xml version=&quot;1.0&quot;?&gt;
+    &lt;root&gt;
+        &lt;result&gt;
+            &lt;row&gt;
+                &lt;id&gt;1&lt;/id&gt;
+                &lt;name&gt;The Blabbers&lt;/name&gt;
+                &lt;birth_year&gt;1998&lt;/birth_year&gt;
+                &lt;birth_place&gt;London&lt;/birth_place&gt;
+                &lt;genre&gt;Rock'n'Roll&lt;/genre&gt;
+            &lt;/row&gt;
+            &lt;row&gt;
+                &lt;id&gt;2&lt;/id&gt;
+                &lt;name&gt;Only Stupids&lt;/name&gt;
+                &lt;birth_year&gt;1997&lt;/birth_year&gt;
+                &lt;birth_place&gt;New York&lt;/birth_place&gt;
+                &lt;genre&gt;Hip Hop&lt;/genre&gt;
+            &lt;/row&gt;
+        &lt;/result&gt;
+    &lt;/root&gt;
+</pre>'</td>
+</tr>
+</table>
+
+<h4><a name="leftjoin"/>Example with a left join query</h4>
+
+In this example we use a more complicated query. It joins the 2
+tables with a simple left join, so we can see which band published
+which albums. As you can see in the result, the albums are
+automagically nested into the elements of the corresponfing
+band-tags. Sql2xml tries to find out, which data belongs to which
+in the parent table. As said above, this works at the moment only
+with mysql and only reliable if you don't have joined more than two
+tables. How to give correct results without mysql or with more than
+two tables, see another example below. <p /><table cellpadding="5" cellspacing="0" border="0" width="100%">
+<tr>
+<td>
+<b>example2.php</b></td>
+</tr>
+<tr>
+<td bgcolor="#E0E0E0">
+<code><font color="#000000">
+<font color="#0000BB">&lt;?php<br></font><font color="#007700">include_once(</font><font color="#DD0000">"XML/sql2xml.php"</font><font color="#007700">);<br></font><font color="#0000BB">$sql2xmlclass&nbsp;</font><font color="#007700">=&nbsp;new&nbsp;</font><font color="#0000BB">xml_sql2xml</font><font color="#007700">(</font><font color="#DD0000">"mysql://username:password@localhost/xmltest"</font><font color="#007700">);<br></font><font color="#0000BB">$xmlstring&nbsp;</font><font color="#007700">=&nbsp;</font><font color="#0000BB">$sql2xmlclass</font><font color="#007700">-&gt;</font><font color="#0000BB">getxml</font><font color="#007700">(</font><font color="#DD0000">"select * from bands left join albums on bands.id = bandsID"</font><font color="#007700">);<br></font><font color="#0000BB">?&gt;<br></font><br></font>
+</code></td>
+</tr>
+
+<tr>
+<td>
+This example will produce:</td>
+</tr>
+<tr>
+<td bgcolor="#eeeeee">
+$xmlstring = '<pre>&lt;?xml version=&quot;1.0&quot;?&gt;
+    &lt;root&gt;
+        &lt;result&gt;
+            &lt;row&gt;
+                &lt;id&gt;1&lt;/id&gt;
+                &lt;name&gt;The Blabbers&lt;/name&gt;
+                &lt;birth_year&gt;1998&lt;/birth_year&gt;
+                &lt;birth_place&gt;London&lt;/birth_place&gt;
+                &lt;genre&gt;Rock'n'Roll&lt;/genre&gt;
+                &lt;row&gt;
+                    &lt;id&gt;1&lt;/id&gt;
+                    &lt;bandsID&gt;1&lt;/bandsID&gt;
+                    &lt;title&gt;BlaBla&lt;/title&gt;
+                    &lt;year&gt;1998&lt;/year&gt;
+                    &lt;comment&gt;Their first one&lt;/comment&gt;
+                &lt;/row&gt;
+                &lt;row&gt;
+                    &lt;id&gt;2&lt;/id&gt;
+                    &lt;bandsID&gt;1&lt;/bandsID&gt;
+                    &lt;title&gt;More Talks&lt;/title&gt;
+                    &lt;year&gt;2000&lt;/year&gt;
+                    &lt;comment&gt;The second one&lt;/comment&gt;
+                &lt;/row&gt;
+            &lt;/row&gt;
+            &lt;row&gt;
+                &lt;id&gt;2&lt;/id&gt;
+                &lt;name&gt;Only Stupids&lt;/name&gt;
+                &lt;birth_year&gt;1997&lt;/birth_year&gt;
+                &lt;birth_place&gt;New York&lt;/birth_place&gt;
+                &lt;genre&gt;Hip Hop&lt;/genre&gt;
+                &lt;row&gt;
+                    &lt;id&gt;3&lt;/id&gt;
+                    &lt;bandsID&gt;2&lt;/bandsID&gt;
+                    &lt;title&gt;All your base...&lt;/title&gt;
+                    &lt;year&gt;1999&lt;/year&gt;
+                    &lt;comment&gt;The Classic&lt;/comment&gt;
+                &lt;/row&gt;
+            &lt;/row&gt;
+        &lt;/result&gt;
+    &lt;/root&gt;
+</pre>'</td>
+</tr>
+</table>
+
+<h4><a name="anotherleftjoin"/>Another Example with a left join query but not nested</h4>
+
+If you don't like the nested feature of Sql2xml, you can turn that
+of and you get a flat view of your query. Just set this options
+with <code>
+$sql2xmlclass-&gt;SetOptions(array(nested=&gt;False))</code> before
+you call getxml. <p /><table cellpadding="5" cellspacing="0" border="0" width="100%">
+<tr>
+<td>
+<b>example3.php</b></td>
+</tr>
+<tr>
+<td bgcolor="#E0E0E0">
+<code><font color="#000000">
+<font color="#0000BB">&lt;?php<br></font><font color="#007700">include_once(</font><font color="#DD0000">"XML/sql2xml.php"</font><font color="#007700">);<br></font><font color="#0000BB">$sql2xmlclass&nbsp;</font><font color="#007700">=&nbsp;new&nbsp;</font><font color="#0000BB">xml_sql2xml</font><font color="#007700">(</font><font color="#DD0000">"mysql://username:password@localhost/xmltest"</font><font color="#007700">);<br></font><font color="#0000BB">$options&nbsp;</font><font color="#007700">=&nbsp;array(</font><font color="#0000BB">nested&nbsp;</font><font color="#007700">=&gt;&nbsp;</font><font color="#0000BB">False</font><font color="#007700">);<br></font><font color="#0000BB">$sql2xmlclass</font><font color="#007700">-&gt;</font><font color="#0000BB">SetOptions</font><font color="#007700">(</font><font color="#0000BB">$options</font><font color="#007700">);<br></font><font color="#0000BB">$xmlstring&nbsp;</font><font color="#007700">=&nbsp;</font><font color="#0000BB">$sql2xmlclass</font><font color="#007700">-&gt;</font><font color="#0000BB">getxml</font><font color="#007700">(</font><font color="#DD0000">"select * from bands left join albums on bands.id = bandsID"</font><font color="#007700">);<br></font><font color="#0000BB">?&gt;<br></font><br></font>
+</code></td>
+</tr>
+
+<tr>
+<td>
+This example will produce:</td>
+</tr>
+<tr>
+<td bgcolor="#eeeeee">
+$xmlstring = '<pre>&lt;?xml version=&quot;1.0&quot;?&gt;
+    &lt;root&gt;
+        &lt;result&gt;
+            &lt;row&gt;
+                &lt;id&gt;1&lt;/id&gt;
+                &lt;name&gt;The Blabbers&lt;/name&gt;
+                &lt;birth_year&gt;1998&lt;/birth_year&gt;
+                &lt;birth_place&gt;London&lt;/birth_place&gt;
+                &lt;genre&gt;Rock'n'Roll&lt;/genre&gt;
+                &lt;id&gt;1&lt;/id&gt;
+                &lt;bandsID&gt;1&lt;/bandsID&gt;
+                &lt;title&gt;BlaBla&lt;/title&gt;
+                &lt;year&gt;1998&lt;/year&gt;
+                &lt;comment&gt;Their first one&lt;/comment&gt;
+            &lt;/row&gt;
+            &lt;row&gt;
+                &lt;id&gt;1&lt;/id&gt;
+                &lt;name&gt;The Blabbers&lt;/name&gt;
+                &lt;birth_year&gt;1998&lt;/birth_year&gt;
+                &lt;birth_place&gt;London&lt;/birth_place&gt;
+                &lt;genre&gt;Rock'n'Roll&lt;/genre&gt;
+                &lt;id&gt;2&lt;/id&gt;
+                &lt;bandsID&gt;1&lt;/bandsID&gt;
+                &lt;title&gt;More Talks&lt;/title&gt;
+                &lt;year&gt;2000&lt;/year&gt;
+                &lt;comment&gt;The second one&lt;/comment&gt;
+            &lt;/row&gt;
+            &lt;row&gt;
+                &lt;id&gt;2&lt;/id&gt;
+                &lt;name&gt;Only Stupids&lt;/name&gt;
+                &lt;birth_year&gt;1997&lt;/birth_year&gt;
+                &lt;birth_place&gt;New York&lt;/birth_place&gt;
+                &lt;genre&gt;Hip Hop&lt;/genre&gt;
+                &lt;id&gt;3&lt;/id&gt;
+                &lt;bandsID&gt;2&lt;/bandsID&gt;
+                &lt;title&gt;All your base...&lt;/title&gt;
+                &lt;year&gt;1999&lt;/year&gt;
+                &lt;comment&gt;The Classic&lt;/comment&gt;
+            &lt;/row&gt;
+        &lt;/result&gt;
+    &lt;/root&gt;
+</pre>'</td>
+</tr>
+</table>
+
+<h4><a name="addarray"/>How to add an array</h4>
+Adding an associative-array to your xml-tree is as easy as adding an sql-statement.
+You just create an array like the one in the example and pass that as the
+parameter in $sql2xmlclass->getxml(). The code automatically detects if it's
+array or a query string (or a db_result ...).<br>
+You can pass almost any associative-array, even multidimensional ones and you should
+get a decent xml-representation out of it. For renaming the tags, the same rules as
+with a sql-query apply. See <a href="#tablerelations">"How to give your own table-relations-structure"</a>
+for that. And furthermore, the addArray function uses
+the same insertElements functions as the DB-part, so you can use them for both (See
+<a href="#ext">"Extending sql2xml"</a> for that).<br>
+
+
+<p /><table cellpadding="5" cellspacing="0" border="0" width="100%">
+<tr>
+<td>
+<b>example5.php</b></td>
+</tr>
+<tr>
+<td bgcolor="#E0E0E0">
+<code><font color="#000000">
+<font color="#0000BB">&lt;?php<br></font><font color="#007700">include_once(</font><font color="#DD0000">"XML/sql2xml.php"</font><font color="#007700">);<br><br></font><font color="#0000BB">$sql2xmlclass&nbsp;</font><font color="#007700">=&nbsp;new&nbsp;</font><font color="#0000BB">xml_sql2xml</font><font color="#007700">(</font><font color="#DD0000">"mysql://username:password@localhost/xmltest"</font><font color="#007700">);<br><br></font><font color="#0000BB">$array&nbsp;</font><font color="#007700">=&nbsp;array&nbsp;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;array(</font><font color="#DD0000">"name"</font><font color="#007700">=&gt;</font><font color="#DD0000">"The Blabbers"</font><font color="#007700">,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font><font color="#DD0000">"birth_year"</font><font color="#007700">=&gt;</font><font color="#DD0000">"1998"</font><font color="#007700">,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font><font color="#DD0000">"birth_place"</font><font color="#007700">=&gt;</font><font color="#DD0000">"London"</font><font color="#007700">,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font><font color="#DD0000">"genre"</font><font color="#007700">=&gt;</font><font color="#DD0000">"Rock'n'Roll"</font><font color="#007700">),<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;array(</font><font color="#DD0000">"name"</font><font color="#007700">=&gt;</font><font color="#DD0000">"Only Stupids"</font><font color="#007700">,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font><font color="#DD0000">"birth_year"</font><font color="#007700">=&gt;</font><font color="#DD0000">"1997"</font><font color="#007700">,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font><font color="#DD0000">"birth_place"</font><font color="#007700">=&gt;</font><font color="#DD0000">"New York"</font><font color="#007700">,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font><font color="#DD0000">"genre"</font><font color="#007700">=&gt;</font><font color="#DD0000">"hiphop"</font><font color="#007700">)<br>);<br><br></font><font color="#0000BB">$xmlstring&nbsp;</font><font color="#007700">=&nbsp;</font><font color="#0000BB">$sql2xmlclass</font><font color="#007700">-&gt;</font><font color="#0000BB">getxml</font><font color="#007700">(</font><font color="#0000BB">$array</font><font color="#007700">);<br><br></font><font color="#0000BB">?&gt;<br></font><br></font>
+</code></td>
+</tr>
+
+<tr>
+<td>
+This example will produce:</td>
+</tr>
+<tr>
+<td bgcolor="#eeeeee">
+$xmlstring = '<pre>&lt;?xml version=&quot;1.0&quot;?&gt;
+    &lt;root&gt;
+        &lt;result&gt;
+            &lt;row&gt;
+                &lt;name&gt;The Blabbers&lt;/name&gt;
+                &lt;birth_year&gt;1998&lt;/birth_year&gt;
+                &lt;birth_place&gt;London&lt;/birth_place&gt;
+                &lt;genre&gt;Rock'n'Roll&lt;/genre&gt;
+            &lt;/row&gt;
+            &lt;row&gt;
+                &lt;name&gt;Only Stupids&lt;/name&gt;
+                &lt;birth_year&gt;1997&lt;/birth_year&gt;
+                &lt;birth_place&gt;New York&lt;/birth_place&gt;
+                &lt;genre&gt;hiphop&lt;/genre&gt;
+            &lt;/row&gt;
+        &lt;/result&gt;
+    &lt;/root&gt;
+</pre>'</td>
+</tr>
+</table>
+
+
+<h4><a name="moreresult"/>How to add more than one resultset</h4>
+Instead of directly passing the sql in the $sql2xmlclass->getxml() you add each query/array
+first with $sql2xmlclass->add(). It doesn't matter if it's an array a sql-string
+or a pear::db_result, the add-method calls the right functions for you.<br>
+The last result could also be passed to the class with the $sql2xmlclass->getxml() method
+like before, if you like that more.<p>
+be aware, if you want to add more than one resultset, you should not give an empty string
+as the second parameter (the name of the root-element) in the constructor, otherwise you get
+only the first resultset back.
+
+<p /><table cellpadding="5" cellspacing="0" border="0" width="100%">
+<tr>
+<td>
+<b>example6.php</b></td>
+</tr>
+<tr>
+<td bgcolor="#E0E0E0">
+<code><font color="#000000">
+<font color="#0000BB">&lt;?php<br></font><font color="#007700">include_once(</font><font color="#DD0000">"XML/sql2xml.php"</font><font color="#007700">);<br></font><font color="#0000BB">$sql2xmlclass&nbsp;</font><font color="#007700">=&nbsp;new&nbsp;</font><font color="#0000BB">xml_sql2xml</font><font color="#007700">(</font><font color="#DD0000">"mysql://username:password@localhost/xmltest"</font><font color="#007700">);<br></font><font color="#0000BB">$sql2xmlclass</font><font color="#007700">-&gt;</font><font color="#0000BB">add</font><font color="#007700">(</font><font color="#DD0000">"select * from bands"</font><font color="#007700">);<br></font><font color="#0000BB">$sql2xmlclass</font><font color="#007700">-&gt;</font><font color="#0000BB">add</font><font color="#007700">(</font><font color="#DD0000">"select * from albums"</font><font color="#007700">);<br></font><font color="#0000BB">$xmlstring</font><font color="#007700">=&nbsp;</font><font color="#0000BB">$sql2xmlclass</font><font color="#007700">-&gt;</font><font color="#0000BB">getxml</font><font color="#007700">();<br></font><font color="#0000BB">?&gt;<br></font><br></font>
+</code></td>
+</tr>
+
+<tr>
+<td>
+This example will produce:</td>
+</tr>
+<tr>
+<td bgcolor="#eeeeee">
+$xmlstring = '<pre>&lt;?xml version=&quot;1.0&quot;?&gt;
+    &lt;root&gt;
+        &lt;result&gt;
+            &lt;row&gt;
+                &lt;id&gt;1&lt;/id&gt;
+                &lt;name&gt;The Blabbers&lt;/name&gt;
+                &lt;birth_year&gt;1998&lt;/birth_year&gt;
+                &lt;birth_place&gt;London&lt;/birth_place&gt;
+                &lt;genre&gt;Rock'n'Roll&lt;/genre&gt;
+            &lt;/row&gt;
+            &lt;row&gt;
+                &lt;id&gt;2&lt;/id&gt;
+                &lt;name&gt;Only Stupids&lt;/name&gt;
+                &lt;birth_year&gt;1997&lt;/birth_year&gt;
+                &lt;birth_place&gt;New York&lt;/birth_place&gt;
+                &lt;genre&gt;Hip Hop&lt;/genre&gt;
+            &lt;/row&gt;
+        &lt;/result&gt;
+        &lt;result&gt;
+            &lt;row&gt;
+                &lt;id&gt;1&lt;/id&gt;
+                &lt;bandsID&gt;1&lt;/bandsID&gt;
+                &lt;title&gt;BlaBla&lt;/title&gt;
+                &lt;year&gt;1998&lt;/year&gt;
+                &lt;comment&gt;Their first one&lt;/comment&gt;
+            &lt;/row&gt;
+            &lt;row&gt;
+                &lt;id&gt;2&lt;/id&gt;
+                &lt;bandsID&gt;1&lt;/bandsID&gt;
+                &lt;title&gt;More Talks&lt;/title&gt;
+                &lt;year&gt;2000&lt;/year&gt;
+                &lt;comment&gt;The second one&lt;/comment&gt;
+            &lt;/row&gt;
+            &lt;row&gt;
+                &lt;id&gt;3&lt;/id&gt;
+                &lt;bandsID&gt;2&lt;/bandsID&gt;
+                &lt;title&gt;All your base...&lt;/title&gt;
+                &lt;year&gt;1999&lt;/year&gt;
+                &lt;comment&gt;The Classic&lt;/comment&gt;
+            &lt;/row&gt;
+        &lt;/result&gt;
+    &lt;/root&gt;
+</pre>'</td>
+</tr>
+</table>
+
+
+<h4><a name="othertags" />How to get other tag-names than &lt;row&gt; and &lt;result&gt;</h4>
+
+Just provide an options-Array with the elements "tagNameRow" and/or "tagNameResult" to setOptions(). See the example for details.
+<br />If you want to change the root-tag-name, you have to provide it in the constructor.
+<p />
+If you want more complex xmls than this base class provides, see <a href="#ext">"Extending sql2xml"</a> for more information.
+<p /><table cellpadding="5" cellspacing="0" border="0" width="100%">
+<tr>
+<td>
+<b>example9.php</b></td>
+</tr>
+<tr>
+<td bgcolor="#E0E0E0">
+<code><font color="#000000">
+<font color="#0000BB">&lt;?php<br></font><font color="#007700">include_once(</font><font color="#DD0000">"XML/sql2xml.php"</font><font color="#007700">);<br></font><font color="#0000BB">$sql2xmlclass&nbsp;</font><font color="#007700">=&nbsp;new&nbsp;</font><font color="#0000BB">xml_sql2xml</font><font color="#007700">(</font><font color="#DD0000">"mysql://username:password@localhost/xmltest"</font><font color="#007700">,</font><font color="#DD0000">"YourRootName"</font><font color="#007700">);<br></font><font color="#0000BB">$options&nbsp;</font><font color="#007700">=&nbsp;array&nbsp;(&nbsp;&nbsp;</font><font color="#0000BB">tagNameRow&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font><font color="#007700">=&gt;&nbsp;</font><font color="#DD0000">"YourRowName"</font><font color="#007700">,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font><font color="#0000BB">tagNameResult&nbsp;&nbsp;&nbsp;</font><font color="#007700">=&gt;&nbsp;</font><font color="#DD0000">"YourResultName"<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font><font color="#007700">);<br></font><font color="#0000BB">$sql2xmlclass</font><font color="#007700">-&gt;</font><font color="#0000BB">SetOptions</font><font color="#007700">(</font><font color="#0000BB">$options</font><font color="#007700">);<br></font><font color="#0000BB">$xmlstring&nbsp;</font><font color="#007700">=&nbsp;</font><font color="#0000BB">$sql2xmlclass</font><font color="#007700">-&gt;</font><font color="#0000BB">getxml</font><font color="#007700">(</font><font color="#DD0000">"select * from bands"</font><font color="#007700">);<br></font><font color="#0000BB">?&gt;<br></font><br></font>
+</code></td>
+</tr>
+
+<tr>
+<td>
+This example will produce:</td>
+</tr>
+<tr>
+<td bgcolor="#eeeeee">
+$xmlstring = '<pre>&lt;?xml version=&quot;1.0&quot;?&gt;
+    &lt;YourRootName&gt;
+        &lt;YourResultName&gt;
+            &lt;YourRowName&gt;
+                &lt;id&gt;1&lt;/id&gt;
+                &lt;name&gt;The Blabbers&lt;/name&gt;
+                &lt;birth_year&gt;1998&lt;/birth_year&gt;
+                &lt;birth_place&gt;London&lt;/birth_place&gt;
+                &lt;genre&gt;Rock'n'Roll&lt;/genre&gt;
+            &lt;/YourRowName&gt;
+            &lt;YourRowName&gt;
+                &lt;id&gt;2&lt;/id&gt;
+                &lt;name&gt;Only Stupids&lt;/name&gt;
+                &lt;birth_year&gt;1997&lt;/birth_year&gt;
+                &lt;birth_place&gt;New York&lt;/birth_place&gt;
+                &lt;genre&gt;Hip Hop&lt;/genre&gt;
+            &lt;/YourRowName&gt;
+        &lt;/YourResultName&gt;
+    &lt;/YourRootName&gt;
+</pre>'</td>
+</tr>
+</table>
+
+<h4><a name="xpath"/>What's this xpath stuff ?</h4>
+After you added a query, you normaly have no direct access to the result of this query, but maybe you need some values of it for further processing. Instead of making the same query again, you can get the values with an xpath-expression. Xpath is a W3-Standard and for further information about that, ask your preferred XSL/XML book, or http://www.w3.org.<p />
+The functions getXpathValue() and getXpathChildValues() make it relatively easy to get values from the stuff already inserted into the xml. Just see the examples, how it roughly works. Furthermore you can apply xpath-expression directly in sql-queries and when you're importing another xml-file.<br /> 
+In the first example below you can see, how we get the name of the band with an id = 2.<br />
+In the second example, we get an array back with all the information for the band with an id = 2.<br />
+You can also add xpath-expressions directly to the sql-query to refer to values got with a query before. In the third example, we want additionally all the albums from the band called "The Blabbers". Therefore we have to know the ID of this band, which we get with the xpath-expression in the curly brackets (but only if we added a query before containing this information...).<br />
+For adding xml-files, you can also apply xpath-expressions. In the fourth example, from <a href="./bands.xml">bands.xml</a> we only want  the band with id = 2 included, therefore we supply this xpath as a second parameter to add(). Since the full path gets lost with this xpath-expression, we also provide an additional path, which is prepended before the actual result. This root-parameter is optional, as is the xpath-parameter. Without that one, the whole xml-file is taken.
+
+
+<p /><table cellpadding="5" cellspacing="0" border="0" width="100%">
+<tr>
+<td>
+<b>exampleXpath.php</b></td>
+</tr>
+<tr>
+<td bgcolor="#E0E0E0">
+<code><font color="#000000">
+<font color="#0000BB">&lt;?php<br></font><font color="#007700">include_once(</font><font color="#DD0000">"XML/sql2xml.php"</font><font color="#007700">);<br></font><font color="#0000BB">$sql2xmlclass&nbsp;</font><font color="#007700">=&nbsp;new&nbsp;</font><font color="#0000BB">xml_sql2xml</font><font color="#007700">(</font><font color="#DD0000">"mysql://username:password@localhost/xmltest"</font><font color="#007700">);<br></font><font color="#0000BB">$sql2xmlclass</font><font color="#007700">-&gt;</font><font color="#0000BB">add</font><font color="#007700">(</font><font color="#DD0000">"select * from bands"</font><font color="#007700">);<br></font><font color="#0000BB">$xmlstring&nbsp;&nbsp;</font><font color="#007700">=&nbsp;</font><font color="#0000BB">$sql2xmlclass</font><font color="#007700">-&gt;</font><font color="#0000BB">getXpathValue</font><font color="#007700">(</font><font color="#DD0000">"/root/result/row[id = '2']/name"</font><font color="#007700">);<br></font><font color="#0000BB">?&gt;<br></font><br></font>
+</code></td>
+</tr>
+
+<tr>
+<td>
+This example will produce:</td>
+</tr>
+<tr>
+<td bgcolor="#eeeeee">
+$xmlstring = 'Only Stupids'</td>
+</tr>
+</table>
+<p /><table cellpadding="5" cellspacing="0" border="0" width="100%">
+<tr>
+<td>
+<b>exampleXpath2.php</b></td>
+</tr>
+<tr>
+<td bgcolor="#E0E0E0">
+<code><font color="#000000">
+<font color="#0000BB">&lt;?php<br></font><font color="#007700">include_once(</font><font color="#DD0000">"XML/sql2xml.php"</font><font color="#007700">);<br></font><font color="#0000BB">$sql2xmlclass&nbsp;</font><font color="#007700">=&nbsp;new&nbsp;</font><font color="#0000BB">xml_sql2xml</font><font color="#007700">(</font><font color="#DD0000">"mysql://username:password@localhost/xmltest"</font><font color="#007700">);<br></font><font color="#0000BB">$sql2xmlclass</font><font color="#007700">-&gt;</font><font color="#0000BB">add</font><font color="#007700">(</font><font color="#DD0000">"select * from bands"</font><font color="#007700">);<br></font><font color="#0000BB">$xmlstring&nbsp;&nbsp;</font><font color="#007700">=&nbsp;</font><font color="#0000BB">$sql2xmlclass</font><font color="#007700">-&gt;</font><font color="#0000BB">getXpathChildValues</font><font color="#007700">(</font><font color="#DD0000">"/root/result/row[id = '2']"</font><font color="#007700">);<br></font><font color="#0000BB">?&gt;<br></font><br></font>
+</code></td>
+</tr>
+
+<tr>
+<td>
+This example will produce:</td>
+</tr>
+<tr>
+<td bgcolor="#eeeeee">
+$xmlstring = '<pre>Array
+(
+    [id] => 2
+    [name] => Only Stupids
+    [birth_year] => 1997
+    [birth_place] => New York
+    [genre] => Hip Hop
+)
+</pre>
+'</td>
+</tr>
+</table>
+<p /><table cellpadding="5" cellspacing="0" border="0" width="100%">
+<tr>
+<td>
+<b>exampleXpath3.php</b></td>
+</tr>
+<tr>
+<td bgcolor="#E0E0E0">
+<code><font color="#000000">
+<font color="#0000BB">&lt;?php<br></font><font color="#007700">include_once(</font><font color="#DD0000">"XML/sql2xml.php"</font><font color="#007700">);<br></font><font color="#0000BB">$sql2xmlclass&nbsp;</font><font color="#007700">=&nbsp;new&nbsp;</font><font color="#0000BB">xml_sql2xml</font><font color="#007700">(</font><font color="#DD0000">"mysql://username:password@localhost/xmltest"</font><font color="#007700">);<br></font><font color="#0000BB">$sql2xmlclass</font><font color="#007700">-&gt;</font><font color="#0000BB">add</font><font color="#007700">(</font><font color="#DD0000">"select * from bands"</font><font color="#007700">);<br></font><font color="#0000BB">$sql2xmlclass</font><font color="#007700">-&gt;</font><font color="#0000BB">add</font><font color="#007700">(</font><font color="#DD0000">"select * from albums where bandsID = {/root/result/row[name = 'The Blabbers']/id}"</font><font color="#007700">);<br></font><font color="#0000BB">$xmlstring&nbsp;</font><font color="#007700">=&nbsp;</font><font color="#0000BB">$sql2xmlclass</font><font color="#007700">-&gt;</font><font color="#0000BB">getxml</font><font color="#007700">();<br></font><font color="#0000BB">?&gt;<br></font><br></font>
+</code></td>
+</tr>
+
+<tr>
+<td>
+This example will produce:</td>
+</tr>
+<tr>
+<td bgcolor="#eeeeee">
+$xmlstring = '<pre>&lt;?xml version=&quot;1.0&quot;?&gt;
+    &lt;root&gt;
+        &lt;result&gt;
+            &lt;row&gt;
+                &lt;id&gt;1&lt;/id&gt;
+                &lt;name&gt;The Blabbers&lt;/name&gt;
+                &lt;birth_year&gt;1998&lt;/birth_year&gt;
+                &lt;birth_place&gt;London&lt;/birth_place&gt;
+                &lt;genre&gt;Rock'n'Roll&lt;/genre&gt;
+            &lt;/row&gt;
+            &lt;row&gt;
+                &lt;id&gt;2&lt;/id&gt;
+                &lt;name&gt;Only Stupids&lt;/name&gt;
+                &lt;birth_year&gt;1997&lt;/birth_year&gt;
+                &lt;birth_place&gt;New York&lt;/birth_place&gt;
+                &lt;genre&gt;Hip Hop&lt;/genre&gt;
+            &lt;/row&gt;
+        &lt;/result&gt;
+        &lt;result&gt;
+            &lt;row&gt;
+                &lt;id&gt;1&lt;/id&gt;
+                &lt;bandsID&gt;1&lt;/bandsID&gt;
+                &lt;title&gt;BlaBla&lt;/title&gt;
+                &lt;year&gt;1998&lt;/year&gt;
+                &lt;comment&gt;Their first one&lt;/comment&gt;
+            &lt;/row&gt;
+            &lt;row&gt;
+                &lt;id&gt;2&lt;/id&gt;
+                &lt;bandsID&gt;1&lt;/bandsID&gt;
+                &lt;title&gt;More Talks&lt;/title&gt;
+                &lt;year&gt;2000&lt;/year&gt;
+                &lt;comment&gt;The second one&lt;/comment&gt;
+            &lt;/row&gt;
+        &lt;/result&gt;
+    &lt;/root&gt;
+</pre>'</td>
+</tr>
+</table>
+<p /><table cellpadding="5" cellspacing="0" border="0" width="100%">
+<tr>
+<td>
+<b>exampleXpath4.php</b></td>
+</tr>
+<tr>
+<td bgcolor="#E0E0E0">
+<code><font color="#000000">
+<font color="#0000BB">&lt;?php<br></font><font color="#007700">include_once(</font><font color="#DD0000">"XML/sql2xml.php"</font><font color="#007700">);<br></font><font color="#0000BB">$sql2xmlclass&nbsp;</font><font color="#007700">=&nbsp;new&nbsp;</font><font color="#0000BB">xml_sql2xml</font><font color="#007700">();<br></font><font color="#0000BB">$sql2xmlclass</font><font color="#007700">-&gt;</font><font color="#0000BB">add</font><font color="#007700">(</font><font color="#DD0000">"bands.xml"</font><font color="#007700">,array(</font><font color="#DD0000">"xpath"</font><font color="#007700">=&gt;</font><font color="#DD0000">"/bands/band[id='2']"</font><font color="#007700">,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font><font color="#DD0000">"root"&nbsp;</font><font color="#007700">=&gt;</font><font color="#DD0000">"/bands"&nbsp;&nbsp;&nbsp;</font><font color="#007700">)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;);<br></font><font color="#0000BB">$xmlstring&nbsp;</font><font color="#007700">=&nbsp;</font><font color="#0000BB">$sql2xmlclass</font><font color="#007700">-&gt;</font><font color="#0000BB">getxml</font><font color="#007700">();<br></font><font color="#0000BB">?&gt;<br></font><br></font>
+</code></td>
+</tr>
+
+<tr>
+<td>
+This example will produce:</td>
+</tr>
+<tr>
+<td bgcolor="#eeeeee">
+$xmlstring = '<pre>&lt;?xml version=&quot;1.0&quot;?&gt;
+    &lt;root&gt;
+        &lt;bands&gt;             &lt;band&gt;                 &lt;id&gt;1&lt;/id&gt;                 &lt;name&gt;The Blabbers&lt;/name&gt;                 &lt;birth_year&gt;1998&lt;/birth_year&gt;                 &lt;birth_place&gt;London&lt;/birth_place&gt;                 &lt;genre&gt;Rock'n'Roll&lt;/genre&gt;             &lt;/band&gt;             &lt;band&gt;                 &lt;id&gt;2&lt;/id&gt;                 &lt;name&gt;Only Stupids&lt;/name&gt;                 &lt;birth_year&gt;1997&lt;/birth_year&gt;                 &lt;birth_place&gt;New York&lt;/birth_place&gt;                 &lt;genre&gt;Hip Hop&lt;/genre&gt;             &lt;/band&gt;         &lt;/bands&gt;
+    &lt;/root&gt;
+</pre>'</td>
+</tr>
+</table>
+<h4><a name="tablerelations"/>How to give your own table-relations-structure </h4>
+
+I'm not very satisfied how you can do this at the moment, so I maybe rewrite some stuff in the code and write then this part of the tutorial.
+
+
+
+<h4><a name="dbobject"/>How to use db_result Object instead of a sql-string / pear::db object instead of dsn </h4>
+
+Since the main methods automatically detect, if you pass a db_result Object or a sql-string /
+a pear::db object or a "data source name" you can use the same methods. See the example for details. It
+does the same as example 1.
+
+<p /><table cellpadding="5" cellspacing="0" border="0" width="100%">
+<tr>
+<td>
+<b>example8.php</b></td>
+</tr>
+<tr>
+<td bgcolor="#E0E0E0">
+<code><font color="#000000">
+<font color="#0000BB">&lt;?php<br></font><font color="#007700">include_once(</font><font color="#DD0000">"XML/sql2xml.php"</font><font color="#007700">);<br>include_once(</font><font color="#DD0000">"DB.php"</font><font color="#007700">);<br></font><font color="#0000BB">$db&nbsp;</font><font color="#007700">=&nbsp;</font><font color="#0000BB">db</font><font color="#007700">::</font><font color="#0000BB">connect</font><font color="#007700">(</font><font color="#DD0000">"mysql://username:password@localhost/xmltest"</font><font color="#007700">);<br></font><font color="#0000BB">$sql2xmlclass&nbsp;</font><font color="#007700">=&nbsp;new&nbsp;</font><font color="#0000BB">xml_sql2xml</font><font color="#007700">(</font><font color="#0000BB">$db</font><font color="#007700">);<br></font><font color="#0000BB">$result&nbsp;</font><font color="#007700">=&nbsp;</font><font color="#0000BB">$db</font><font color="#007700">-&gt;</font><font color="#0000BB">query</font><font color="#007700">(</font><font color="#DD0000">"select * from bands"</font><font color="#007700">);<br></font><font color="#0000BB">$xmlstring&nbsp;</font><font color="#007700">=&nbsp;</font><font color="#0000BB">$sql2xmlclass</font><font color="#007700">-&gt;</font><font color="#0000BB">getxml</font><font color="#007700">(</font><font color="#0000BB">$result</font><font color="#007700">);<br></font><font color="#0000BB">?&gt;<br></font><br></font>
+</code></td>
+</tr>
+
+</table>
+
+
+
+<h4><a name="ext"/>Extending sql2xml </h4>
+
+Since it's almost not possible, to include every wished feature and
+to keep the base sql2xml rather small, it was decided to have the
+possibility to extend sql2xml with some customizable functions.
+sql2xml_ext is such an extended class.
+
+<p>If you want now to customize the sql2xml class to get a xml as
+you wish, you mainly rewrite the following functions (look at the
+source code for the parameter definitions).</p>
+
+<ul>
+<li>insertNewResult()</li>
+
+<li>insertNewRow()</li>
+
+<li>insertNewElement()</li>
+
+<li>addTableInfo()</li>
+</ul>
+
+This functions are called everytime the corresponding "event"
+occcurs. This means for example, if we add another resultset to the xml,
+insertNewResult is called.
+<p />
+The following very simple example of extending the base class, just
+adds the values in your db-fields not as a new element to the xml,
+but as an attribute to the "row"-element. This is by the way, how MSSQL
+returns db-results as xml. You could also enhance this function, that it
+returns binary-data base64 encoded (also the way MSSQL does it...)
+<p /><table cellpadding="5" cellspacing="0" border="0" width="100%">
+<tr>
+<td>
+<b>class_attr.php</b></td>
+</tr>
+<tr>
+<td bgcolor="#E0E0E0">
+<code><font color="#000000">
+<font color="#0000BB">&lt;?php<br></font><font color="#007700">require_once&nbsp;(</font><font color="#DD0000">"XML/sql2xml.php"</font><font color="#007700">);<br>class&nbsp;</font><font color="#0000BB">XML_sql2xml_attr&nbsp;</font><font color="#007700">extends&nbsp;</font><font color="#0000BB">XML_sql2xml&nbsp;</font><font color="#007700">{<br>&nbsp;&nbsp;&nbsp;&nbsp;function&nbsp;</font><font color="#0000BB">insertNewElement</font><font color="#007700">(</font><font color="#0000BB">$parent</font><font color="#007700">,&nbsp;</font><font color="#0000BB">$res</font><font color="#007700">,&nbsp;</font><font color="#0000BB">$key</font><font color="#007700">,&nbsp;&amp;</font><font color="#0000BB">$tableInfo</font><font color="#007700">,&nbsp;&amp;</font><font color="#0000BB">$subrow</font><font color="#007700">)&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font><font color="#0000BB">$subrow</font><font color="#007700">=</font><font color="#0000BB">$parent</font><font color="#007700">-&gt;</font><font color="#0000BB">set_attribute</font><font color="#007700">(</font><font color="#0000BB">$tableInfo</font><font color="#007700">[</font><font color="#0000BB">$key</font><font color="#007700">][</font><font color="#DD0000">"name"</font><font color="#007700">],&nbsp;</font><font color="#0000BB">$this</font><font color="#007700">-&gt;</font><font color="#0000BB">xml_encode</font><font color="#007700">(</font><font color="#0000BB">$res</font><font color="#007700">[</font><font color="#0000BB">$key</font><font color="#007700">]));<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>}<br></font><font color="#0000BB">?&gt;<br></font><br></font>
+</code></td>
+</tr>
+
+</table>
+<p />And the code from example 1 would then look like the following.
+<p /><table cellpadding="5" cellspacing="0" border="0" width="100%">
+<tr>
+<td>
+<b>example_attr_class.php</b></td>
+</tr>
+<tr>
+<td bgcolor="#E0E0E0">
+<code><font color="#000000">
+<font color="#0000BB">&lt;?php<br></font><font color="#007700">include_once(</font><font color="#DD0000">"XML/sql2xml_attr.php"</font><font color="#007700">);<br></font><font color="#0000BB">$sql2xmlclass&nbsp;</font><font color="#007700">=&nbsp;new&nbsp;</font><font color="#0000BB">xml_sql2xml_attr</font><font color="#007700">(</font><font color="#DD0000">"mysql://username:password@localhost/xmltest"</font><font color="#007700">);<br></font><font color="#0000BB">$xmlstring&nbsp;</font><font color="#007700">=&nbsp;</font><font color="#0000BB">$sql2xmlclass</font><font color="#007700">-&gt;</font><font color="#0000BB">getxml</font><font color="#007700">(</font><font color="#DD0000">"select * from bands"</font><font color="#007700">);<br></font><font color="#0000BB">?&gt;<br></font><br></font>
+</code></td>
+</tr>
+
+<tr>
+<td>
+This example will produce:</td>
+</tr>
+<tr>
+<td bgcolor="#eeeeee">
+$xmlstring = '<pre>&lt;?xml version=&quot;1.0&quot;?&gt;
+    &lt;root&gt;
+        &lt;result&gt;
+            &lt;row id=&quot;1&quot; name=&quot;The Blabbers&quot; birth_year=&quot;1998&quot; birth_place=&quot;London&quot; genre=&quot;Rock'n'Roll&quot;/&gt;
+            &lt;row id=&quot;2&quot; name=&quot;Only Stupids&quot; birth_year=&quot;1997&quot; birth_place=&quot;New York&quot; genre=&quot;Hip Hop&quot;/&gt;
+        &lt;/result&gt;
+    &lt;/root&gt;
+</pre>'</td>
+</tr>
+</table>
+<p />
+<h5><a name="moreext"/>A more complex example (Using sql2xml_ext)</h5>
+In one of our projects, we needed a more complex xml, the <a href="http://php.chregu.tv/?file=XML/sql2xml_ext.php">sql2xml_ext class</a>.<br />
+The insertNewResult()-function in the
+base-class just adds a &lt;result&gt;-tag to the xml-tree, but
+sql2xml_ext rewrites the function, so it takes the
+tablename instead of just "result" and adds an attribute
+type="resultset". The same goes for insertNewRow() where we also
+also add the table-name plus an attribute type=row and an unique
+ID, and so on.
+<p />
+
+
+<p>We provide also some additional options to the class. This
+options are in an array called "user_options". This way, it's
+ensured that this variables can be accessed from all functions used
+in this class, because the array $user_options is a class-variable.
+The base-class sql2xml doesn't use any variables defined in
+user_options, so you can be sure, that you don't break anything if
+you extend this class.</p>
+
+<p>In sql2xml_ext, we have two additional user_options-variables.
+"xml_seperator" and "element_id".<br />
+xml_seperator is used in insertNewElement() to seperate field names
+with "_" (in this example) and to make seperate tags out of it
+(this keeps the database somewhat flat, but you get nicer looking
+xmls :)).<br />
+element_id looks for an id-field in insertNewRow() and adds an
+attribute ID to the row-tag containing the table-name and the id of
+this field.</p>
+
+<p /><table cellpadding="5" cellspacing="0" border="0" width="100%">
+<tr>
+<td>
+<b>example_ext.php</b></td>
+</tr>
+<tr>
+<td bgcolor="#E0E0E0">
+<code><font color="#000000">
+<font color="#0000BB">&lt;?php<br></font><font color="#007700">include_once(</font><font color="#DD0000">"XML/sql2xml_ext.php"</font><font color="#007700">);<br><br></font><font color="#0000BB">$options</font><font color="#007700">=&nbsp;array(&nbsp;</font><font color="#0000BB">user_options&nbsp;</font><font color="#007700">=&gt;&nbsp;array&nbsp;(</font><font color="#0000BB">xml_seperator&nbsp;</font><font color="#007700">=&gt;</font><font color="#DD0000">"_"</font><font color="#007700">,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font><font color="#0000BB">element_id&nbsp;</font><font color="#007700">=&gt;&nbsp;</font><font color="#DD0000">"id"</font><font color="#007700">),<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;);<br></font><font color="#0000BB">$sql2xmlclass&nbsp;</font><font color="#007700">=&nbsp;new&nbsp;</font><font color="#0000BB">xml_sql2xml_ext</font><font color="#007700">(</font><font color="#DD0000">"mysql://username:password@localhost/xmltest"</font><font color="#007700">);<br></font><font color="#0000BB">$sql2xmlclass</font><font color="#007700">-&gt;</font><font color="#0000BB">SetOptions</font><font color="#007700">(</font><font color="#0000BB">$options</font><font color="#007700">);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br></font><font color="#0000BB">$xmlstring&nbsp;</font><font color="#007700">=&nbsp;</font><font color="#0000BB">$sql2xmlclass</font><font color="#007700">-&gt;</font><font color="#0000BB">getxml</font><font color="#007700">(</font><font color="#DD0000">"select * from bands"</font><font color="#007700">);<br><br></font><font color="#0000BB">?&gt;<br></font><br></font>
+</code></td>
+</tr>
+
+<tr>
+<td>
+This example will produce:</td>
+</tr>
+<tr>
+<td bgcolor="#eeeeee">
+$xmlstring = '<pre>&lt;?xml version=&quot;1.0&quot;?&gt;
+    &lt;root&gt;
+        &lt;bands type=&quot;resultset&quot;&gt;
+            &lt;bands type=&quot;row&quot; ID=&quot;bands1&quot;&gt;
+                &lt;id&gt;1&lt;/id&gt;
+                &lt;name&gt;The Blabbers&lt;/name&gt;
+                &lt;birth&gt;
+                    &lt;year&gt;1998&lt;/year&gt;
+                    &lt;place&gt;London&lt;/place&gt;
+                &lt;/birth&gt;
+                &lt;genre&gt;Rock'n'Roll&lt;/genre&gt;
+            &lt;/bands&gt;
+            &lt;bands type=&quot;row&quot; ID=&quot;bands2&quot;&gt;
+                &lt;id&gt;2&lt;/id&gt;
+                &lt;name&gt;Only Stupids&lt;/name&gt;
+                &lt;birth&gt;
+                    &lt;year&gt;1997&lt;/year&gt;
+                    &lt;place&gt;New York&lt;/place&gt;
+                &lt;/birth&gt;
+                &lt;genre&gt;Hip Hop&lt;/genre&gt;
+            &lt;/bands&gt;
+        &lt;/bands&gt;
+    &lt;/root&gt;
+</pre>'</td>
+</tr>
+</table>
+
+<h3><a name="missing"/>What's missing now </h3>
+<ul>
+<li> Error detection is not really integrated...
+<li> Producing a schema/dtd for the produced xml (see http://www.w3.org/TR/1998/NOTE-XML-data/)
+</ul>
+
+<h3><a name="end"/>The End</h3>
+
+I hope, I'll bring phpdoc soon to work again, so i can provide you
+with I nice page for the API of this class.
+
+<p>For questions and remarks, contact me <a
+href="mailto:chregu@nomad.ch">chregu@nomad.ch</a>.</p>
+<hr />
+$Id$
+</body>
+</html>
+
