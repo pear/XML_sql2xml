@@ -18,6 +18,12 @@
 	- works with 4.0.6 and below
         - setOption can delete values set before.
 	- Added possibility of other input encoding schemes than iso-8859-1
+	- print_empty_ids is true by default
+	- added new useroption "TableNameForRowTags"
+	- user_option selected_id can take the arguments first and all
+	BugFixes
+	- sql selects are recognized with capitals as well
+	- if there was a < in the database it gave an xml-error, now "< " is "escaped"
     </Notes>
   </Release>
   <FileList>

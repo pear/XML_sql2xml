@@ -31,6 +31,8 @@
 * include_once("XML/sql2xml.php");
 * $db = DB::connect("mysql://root@localhost/xmltest");
 * $sql2xml = new xml_sql2xml();
+* //the next one is only needed, if you need others than the default
+* $sql2xml->setEncoding("ISO-8859-1","UTF-8");
 * $result = $db->query("select * from bands");
 * $xmlstring = $sql2xml->getXML($result);
 *
@@ -235,12 +237,13 @@ class XML_sql2xml {
     */
     function add ($resultset)
     {
+
         // if string, then it's a query, a xml-file or a xml-string...
         if (is_string($resultset)) {
             if (preg_match("/\.xml$/",$resultset)) {
                 $this->AddXmlFile($resultset);
             }
-            elseif (preg_match("/.*select.*from.*/" ,  $resultset)) {
+            elseif (preg_match("/.*select.*from.*/i" ,  $resultset)) {
                 $this->AddSql($resultset);
             }
             else {
@@ -457,19 +460,21 @@ class XML_sql2xml {
         $parent['root'] = $this->insertNewResult(&$tableInfo);
 
         //initialize $resold to get rid of warning messages;
-        $resold[0] = Null;  
+        $resold[0] = "ThisValueIsImpossibleForTheFirstFieldInTheFirstRow";  
 
         while ($FirstFetchDone == True || $res = $result->FetchRow($fetchmode))
         {
+           
             //FirstFetchDone is only for emulating tableInfo, as long as not all dbs support tableInfo. can go away later
             $FirstFetchDone = False;
     
             while (list($key, $val) = each($res))
             {
+
                 if ($resold[$tableInfo["parent_key"][$tableInfo[$key]["table"]]] != $res[$tableInfo["parent_key"][$tableInfo[$key]["table"]]] || !$this->nested)
                 {
                     if ($tableInfo["parent_key"][$tableInfo[$key]["table"]] == $key )
-                    {
+                    {                
                         if ($this->nested || $key == 0)
                         {
 
@@ -658,7 +663,8 @@ class XML_sql2xml {
     // here come some helper functions...
 
     /**
-    * make utf8 out of the input data and escape & with &amp;
+    * make utf8 out of the input data and escape & with &amp; and "< " with "&lt; " 
+    * (we assume that when there's no space after < it's a tag, which we need in the xml)
     *  I'm not sure, if this is the standard way, but it works for me.
     *
     * @param    string text to be utfed.
@@ -666,10 +672,10 @@ class XML_sql2xml {
     */
     function xml_encode ($text)
     {
-        if (function_exists("iconv") && isset($this->encoding_from))
+        if (function_exists("iconv") && isset($this->encoding_from) && isset($this->encoding_to))
         {
              ini_set("track_errors",1);
-             $text = iconv($this->encoding_from,$this->encoding_to,ereg_replace("&","&amp;",$text));
+             $text = iconv($this->encoding_from,$this->encoding_to,ereg_replace("&","&amp;",ereg_replace("< ","&lt; ",$text)));
 
              if (! isset($text) )
              {

@@ -51,10 +51,11 @@ class XML_sql2xml_ext extends XML_sql2xml {
         $user_options = array (
                'xml_seperator' =>"_",
                'element_id' => "ID",
-               'print_empty_ids' => False,
+               'print_empty_ids' => True,
                'selected_id' => array(),
                'field_translate' => array(),
-               'attributes' => array()
+               'attributes' => array(),
+               'TableNameForRowTags' => True
         );
 
        $this->setOptions(array("user_options"=>$user_options));
@@ -63,15 +64,22 @@ class XML_sql2xml_ext extends XML_sql2xml {
 
     function insertNewRow ($parent_row, $res, $key, &$tableInfo)
     {
-        if (!$tableInfo[$key]["table"]) {
+
+        if (!$tableInfo[$key]["table"] ) {
             $tableInfo[$key]["table"] = $this->tagNameResult;
         }
         if ($this->user_options['element_id'] && !$res[$tableInfo["id"][$tableInfo[$key]["table"]]] && !$this->user_options['print_empty_ids'])
         {
             return Null;
         }
-
-        $new_row= $parent_row->new_child($tableInfo[$key]["table"],Null);
+        if ( !$this->user_options['TableNameForRowTags'])
+        {
+               $new_row= $parent_row->new_child($this->tagNameRow,Null);
+        }
+        else
+        {
+            $new_row= $parent_row->new_child($tableInfo[$key]["table"],Null);
+        }
         /* make an unique ID attribute in the row element with tablename.id if there's an id
                otherwise just make an unique id with the php-function, just that there's a unique id for this row.
                 CAUTION: This ID changes every time ;) (if no id from db-table)
@@ -85,10 +93,13 @@ class XML_sql2xml_ext extends XML_sql2xml {
 
         if ($res[$tableInfo["id"][$tableInfo[$key]["table"]]] == $this->user_options['selected_id']
             || $tableInfo[$key]["table"].$res[$tableInfo["id"][$tableInfo[$key]["table"]]] == $this->user_options['selected_id']
-            || (is_array($this->user_options['selected_id']) && in_array($tableInfo[$key]["table"].$res[$tableInfo["id"][$tableInfo[$key]["table"]]],$this->user_options['selected_id'])))
-
+            || (is_array($this->user_options['selected_id']) && in_array($tableInfo[$key]["table"].$res[$tableInfo["id"][$tableInfo[$key]["table"]]],$this->user_options['selected_id']))
+            ||    $this->user_options['selected_id'] == "all" 
+            ||  ($this->user_options['selected_id'] == "first") && !isset($this->table_selected[$tableInfo[$key]["table"]])
+           )
             {
                 $this->SetAttribute($new_row,"selected", "selected");
+                $this->table_selected[$tableInfo[$key]["table"]] = True;
             }
             $this->SetAttribute($new_row,"ID", utf8_encode($tableInfo[$key]["table"] . $res[$tableInfo["id"][$tableInfo[$key]["table"]]]));
         }
@@ -117,6 +128,7 @@ class XML_sql2xml_ext extends XML_sql2xml {
         else
             $xmlroot= $this->xmldoc->add_root($result_root);
         $this->SetAttribute($xmlroot,"type","resultset");
+
         return $xmlroot;
     }
 
