@@ -168,7 +168,9 @@ class XML_sql2xml {
     * (note that domxml at the moment only support UTF-8, or at least it looks like)
     */  
     var $encoding_to = "UTF-8";
-    
+
+    var $tagname = "tagname";
+        
     /**
     * Constructor
     * The Constructor can take a Pear::DB "data source name" (eg.
@@ -221,6 +223,11 @@ class XML_sql2xml {
         
         if ($root) {
             $this->xmlroot = $this->xmldoc->add_root($root);
+            //PHP 4.0.6 had $root->name as tagname, check for that here...            
+            if (!isset($this->xmlroot->{$this->tagname}))
+            {
+                $this->tagname = "name";
+            }
         }
 
     }
@@ -393,7 +400,6 @@ class XML_sql2xml {
         }
 
         // the method_exists is here, cause tableInfo is only in the cvs at the moment
-        // (should be in 4.0.6)
         // BE CAREFUL: if you have fields with the same name in different tables, you will get errors
         // later, since DB_FETCHMODE_ASSOC doesn't differentiate that stuff.
         $this->LastResult = &$result;
@@ -609,7 +615,16 @@ class XML_sql2xml {
         if ($this->xmlroot)
             return $this->xmlroot->new_child($this->tagNameResult, NULL);
         else
-            return $this->xmldoc->add_root($this->tagNameResult);
+        {
+            $this->xmlroot = $this->xmldoc->add_root($this->tagNameResult);
+            //PHP 4.0.6 had $root->name as tagname, check for that here...            
+            if (!isset($this->xmlroot->{$this->tagname}))
+            {
+                $this->tagname = "name";
+            }
+            return $this->xmlroot;
+
+        }
     }
 
 
@@ -747,9 +762,12 @@ class XML_sql2xml {
     function doXmlString2Xml ($string)
     {
         $MainXmlString = $this->xmldoc->dumpmem();
+
         $string = preg_replace("/<\?xml.*\?>/","",$string);
-        $MainXmlString = preg_replace("/<".$this->xmlroot->name."\/>/","<".$this->xmlroot->name."></".$this->xmlroot->name.">",$MainXmlString);
-        $MainXmlString = preg_replace("/<\/".$this->xmlroot->name.">/",$string."</".$this->xmlroot->name.">",$MainXmlString);
+
+        $MainXmlString = preg_replace("/<".$this->xmlroot->{$this->tagname}."\/>/","<".$this->xmlroot->{$this->tagname}."></".$this->xmlroot->{$this->tagname}.">",$MainXmlString);
+        $MainXmlString = preg_replace("/<\/".$this->xmlroot->{$this->tagname}.">/",$string."</".$this->xmlroot->{$this->tagname}.">",$MainXmlString);
+
         $this->xmldoc = xmldoc($MainXmlString);
         $this->xmlroot = $this->xmldoc->root();
     }
