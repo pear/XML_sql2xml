@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!-- do not use the "Type" attribute here, that one is only for
+     generated package.xml files -->
+<Package>
+  <Name>XML_sql2xml</Name>
+  <Summary>This class takes a PEAR::DB-Result Object, a sql-query-string or an array  and returns a xml-representation of it.</Summary>
+  <Maintainer>
+    <Initials>cs</Initials>
+    <Name>Christian Stocker</Name>
+    <Email>chregu@php.net</Email>
+  </Maintainer>
+  <Release>
+    <Version>0.1</Version>
+    <Date>2001-08-03</Date>
+    <Notes>
+	Documentation is in the php-file itself.
+	API may change.
+    </Notes>
+  </Release>
+  <FileList>
+    <Dir Name="XML" BaseInstallDir="XML" >
+      <File Role="php">sql2xml.php</File>
+      <File Role="php">sql2xml_ext.php</File>
+    </Dir>
+  </FileList>
+</Package>
