@@ -6,7 +6,10 @@
   <name>XML_sql2xml</name>
   <summary>Returns XML from a SQL-Query.
 </summary>
-<description>This class takes a PEAR::DB-Result Object, a sql-query-string, an array and/or an xml-string/file and returns a xml-representation of it.</description>
+<description>This class takes a PEAR::DB-Result Object, a sql-query-string, an array and/or an xml-string/file and returns a xml-representation of it.
+
+It relies on the DOMXML extension of PHP.
+</description>
   <maintainers>
     <maintainer>
       <user>chregu</user>
@@ -16,12 +19,13 @@
   </maintainers>
    <license>PHP License</license>
   <release>
-    <version>0.3.1</version>
-    <date>2002-11-19</date>
+    <version>0.3.2</version>
     <state>beta</state>
+    <date>2004-04-01</date>
     <notes>
-		- fixed "Call-time pass-by-reference" errors 
-    </notes>
+        - fix for bug #1110 "addXmlString throws warning when calling append_child()"
+        - register dependencies in package.xml
+     </notes>
     <filelist>
       <dir name="." baseinstalldir="XML">
 	<file role="php">sql2xml.php</file>
@@ -35,23 +39,10 @@
 
     </filelist>
   </release>
-  <changelog>
-    <version>0.3</version>
-    <date>2002-05-03</date>
-    <notes>
-New Features:
-- works with PHP 4.0.7 and below
-- Adding of XML-files/strings is possible
-- setOption can delete values set before.
-- Added possibility of other input encoding schemes than iso-8859-1
-- print_empty_ids is true by default
-- added new useroption "TableNameForRowTags"
-- user_option selected_id can take the arguments first and all	BugFixes
-- sql selects are recognized with capitals as well
-- if there was a [lesserthan] in the database it gave an xml-error,
-  now "[lesserthan] " is "escaped" 
-- xpath support for sql-queries and xml-files to be inserted (see
-  http://php.chregu.tv/sql2xml/#xpath for a little intro about that) 
-    </notes>
-</changelog>
+  <deps>
+    <dep type="ext" rel="has" optional="no">domxml</dep>
+    <dep type="php" rel="lt" version="5" />
+  </deps>
+
+
 </package>
