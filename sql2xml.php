@@ -358,7 +358,7 @@ class XML_sql2xml {
     */
     function addArray ($array)
     {
-        $parent_row = $this->insertNewResult(&$metadata);
+        $parent_row = $this->insertNewResult($metadata);
         $this->DoArray2Xml($array,$parent_row);
     }
 
@@ -467,7 +467,7 @@ class XML_sql2xml {
 
             }
             //if you need more tableInfo for later use you can write a function addTableInfo..
-            $this->addTableInfo($key, $value, &$tableInfo);
+            $this->addTableInfo($key, $value, $tableInfo);
         }
 
         // end initialize
@@ -477,7 +477,7 @@ class XML_sql2xml {
         {
             $tableInfo = $this->array_merge_clobber($tableInfo,$this->user_tableInfo);
         }
-        $parent['root'] = $this->insertNewResult(&$tableInfo);
+        $parent['root'] = $this->insertNewResult($tableInfo);
 
         //initialize $resold to get rid of warning messages;
         $resold[0] = "ThisValueIsImpossibleForTheFirstFieldInTheFirstRow";
@@ -498,7 +498,7 @@ class XML_sql2xml {
                         if ($this->nested || $key == 0)
                         {
 
-                            $parent[$tableInfo[$key]["table"]] =  $this->insertNewRow($parent[$tableInfo["parent_table"][$tableInfo[$key]["table"]]], $res, $key, &$tableInfo);
+                            $parent[$tableInfo[$key]["table"]] =  $this->insertNewRow($parent[$tableInfo["parent_table"][$tableInfo[$key]["table"]]], $res, $key, $tableInfo);
                         }
                         else
                         {
@@ -517,7 +517,7 @@ class XML_sql2xml {
                     }
                     if ( $parent[$tableInfo[$key]["table"]] != Null)
                     {
-                        $this->insertNewElement($parent[$tableInfo[$key]["table"]], $res, $key, &$tableInfo, &$subrow);
+                        $this->insertNewElement($parent[$tableInfo[$key]["table"]], $res, $key, $tableInfo, $subrow);
                     }
 
                 }
@@ -568,11 +568,11 @@ class XML_sql2xml {
                     $keynew = $key;
                 }
 
-                $rec2 = $this->insertNewRow($parent, $valuenew, $keynew, &$tableInfo);
+                $rec2 = $this->insertNewRow($parent, $valuenew, $keynew, $tableInfo);
                 $this->DoArray2xml($value,$rec2);
             }
             else {
-                $this->insertNewElement($parent, $array, $key, &$tableInfo,&$subrow);
+                $this->insertNewElement($parent, $array, $key, $tableInfo, $subrow);
             }
         }
 
