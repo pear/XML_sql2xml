@@ -815,7 +815,7 @@ class XML_sql2xml {
             // if no xpath is given, just take the whole file
             if ( (is_null($xpath)))
             {
-                $newchild->append_child($tmpxml->root());
+                $newchild->replace_node($tmpxml->root());
             }
             else
             {
@@ -823,7 +823,7 @@ class XML_sql2xml {
                 $xnode = xpath_eval($xctx,$xpath);
                 foreach ($xnode->nodeset as $node)
                 {
-                    $newchild->append_child($node);
+                    $newchild->replace_node($node);
                 }
             }
 
