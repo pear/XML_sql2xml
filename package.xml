@@ -29,8 +29,9 @@ It relies on the DOMXML extension of PHP.
  </stability>
  <license uri="http://www.php.net/license">PHP License</license>
  <notes>
-* register dependencies in package.xml
-* Fixed Bug #5576 XML_sql2xml package.xml uses file name="./doc/blah.whatever" which is invalid
+* register dependencies in package.xml [dufuz]
+* Fixed Bug #576  sql2xml xml-resultset without values [ifeghali]
+* Fixed Bug #5576 XML_sql2xml package.xml uses file name="./doc/blah.whatever" which is invalid [dufuz]
  </notes>
  <contents>
   <dir name="/">
