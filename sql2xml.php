@@ -51,8 +51,8 @@
 * @version  $Id$
 * @package  XML
 */
-class XML_sql2xml {
-
+class XML_sql2xml
+{
     /**
     * If joined-tables should be output nested.
     *  Means, if you have joined two or more queries, the later
@@ -89,7 +89,6 @@ class XML_sql2xml {
     */
     var $db = Null;
 
-
     /**
     * Options to be used in extended Classes (for example in sql2xml_ext).
     * They are passed with SetOptions as an array (arrary("user_options" = array());
@@ -102,7 +101,6 @@ class XML_sql2xml {
     */
     var $user_options = array();
 
-
     /**
     * The DomDocument Object to be used in the whole class
     *
@@ -110,7 +108,6 @@ class XML_sql2xml {
     * @access    private
     */
     var $xmldoc;
-
 
     /**
     * The Root of the domxml object
@@ -121,7 +118,6 @@ class XML_sql2xml {
     * @access    private
     */
     var $xmlroot;
-
 
     /**
     * This array is used to give the structure of your database to the class.
@@ -161,15 +157,15 @@ class XML_sql2xml {
     /**
     * the encoding type, the input from the db has
     */
-    var $encoding_from  = "ISO-8859-1";
+    var $encoding_from  = 'ISO-8859-1';
 
     /**
     * the encoding type, the output in the xml should have
     * (note that domxml at the moment only support UTF-8, or at least it looks like)
     */
-    var $encoding_to = "UTF-8";
+    var $encoding_to = 'UTF-8';
 
-    var $tagname = "tagname";
+    var $tagname = 'tagname';
 
     /**
     * Constructor
@@ -189,31 +185,22 @@ class XML_sql2xml {
     * @param  string $root  the name of the xml-doc root element.
     * @access   public
     */
-    function XML_sql2xml ($dsn = Null, $root = "root") {
-
+    function XML_sql2xml($dsn = Null, $root = 'root')
+    {
         // if it's a string, then it must be a dsn-identifier;
-
-        if (is_string($dsn))
-        {
-            include_once ("DB.php");
+        if (is_string($dsn)) {
+            include_once 'DB.php';
             $this->db = DB::Connect($dsn);
-            if (DB::isError($this->db))
-            {
+            if (DB::isError($this->db)) {
                 print "The given dsn for XML_sql2xml was not valid in file ".__FILE__." at line ".__LINE__."<br>\n";
                 return new DB_Error($this->db->code,PEAR_ERROR_DIE);
             }
 
-        }
-
-        elseif (is_object($dsn) && DB::isError($dsn))
-        {
+        } elseif (is_object($dsn) && DB::isError($dsn)) {
             print "The given param for XML_sql2xml was not valid in file ".__FILE__." at line ".__LINE__."<br>\n";
             return new DB_Error($dsn->code,PEAR_ERROR_DIE);
-        }
-
-        // if parent class is db_common, then it's already a connected identifier
-        elseif (get_parent_class($dsn) == "db_common")
-        {
+        } elseif (strtolower(get_parent_class($dsn)) == 'db_common') {
+            // if parent class is db_common, then it's already a connected identifier
             $this->db = $dsn;
         }
 
@@ -225,9 +212,8 @@ class XML_sql2xml {
         if ($root) {
             $this->xmlroot = $this->xmldoc->add_root($root);
             //PHP 4.0.6 had $root->name as tagname, check for that here...
-            if (!isset($this->xmlroot->{$this->tagname}))
-            {
-                $this->tagname = "name";
+            if (!isset($this->xmlroot->{$this->tagname})) {
+                $this->tagname = 'name';
             }
         }
 
@@ -244,28 +230,23 @@ class XML_sql2xml {
     * @access   public
     * @see      addResult(), addSql(), addArray(), addXmlFile()
     */
-    function add ($resultset, $params = Null)
+    function add ($resultset, $params = null)
     {
-
         // if string, then it's a query, a xml-file or a xml-string...
         if (is_string($resultset)) {
             if (preg_match("/\.xml$/",$resultset)) {
                 $this->AddXmlFile($resultset,$params);
-            }
-            elseif (preg_match("/.*select.*from.*/i" ,  $resultset)) {
+            } elseif (preg_match("/.*select.*from.*/i" ,  $resultset)) {
                 $this->AddSql($resultset);
-            }
-            else {
+            } else {
                 $this->AddXmlString($resultset);
             }
-
-        }
-        // if array, then it's an array...
-        elseif (is_array($resultset)) {
+        } elseif (is_array($resultset)) {
+            // if array, then it's an array...
             $this->AddArray($resultset);
         }
 
-        if (get_class($resultset) == "db_result") {
+        if (strtolower(get_class($resultset)) == 'db_result') {
             $this->AddResult($resultset);
         }
     }
@@ -280,12 +261,10 @@ class XML_sql2xml {
     * @see      doXmlString2Xml()
     */
 
-    function addXmlFile($file,$xpath = Null)
+    function addXmlFile($file, $xpath = null)
     {
-        $fd = fopen( $file, "r" );
-        $content = fread( $fd, filesize( $file ) );
-        fclose( $fd );
-        $this->doXmlString2Xml($content,$xpath);
+        $content = file_get_contents($file);
+        $this->doXmlString2Xml($content, $xpath);
     }
 
     /**
@@ -297,9 +276,9 @@ class XML_sql2xml {
     * @access   public
     * @see      doXmlString2Xml()
     */
-    function addXmlString($string,$xpath = Null)
+    function addXmlString($string, $xpath = null)
     {
-        $this->doXmlString2Xml($string,$xpath);
+        $this->doXmlString2Xml($string, $xpath);
     }
 
     /**
@@ -328,10 +307,8 @@ class XML_sql2xml {
         *   be evaluated.
         */
 
-        if (preg_match_all ("/\{([^\}]+)\}/i",$sql,$matches))
-        {
-            foreach ($matches[1] as $match)
-            {
+        if (preg_match_all ("/\{([^\}]+)\}/i",$sql,$matches)) {
+            foreach ($matches[1] as $match) {
                 $sql = preg_replace("#\{".preg_quote($match)."\}#  ", $this->getXpathValue($match),$sql);
             }
         }
@@ -356,7 +333,7 @@ class XML_sql2xml {
     * @access   public
     * @see      doArray2Xml()
     */
-    function addArray ($array)
+    function addArray($array)
     {
         $parent_row = $this->insertNewResult($metadata);
         $this->DoArray2Xml($array,$parent_row);
@@ -373,7 +350,7 @@ class XML_sql2xml {
     * @return   string  xml
     * @access   public
     */
-    function getXML($result = Null)
+    function getXML($result = null)
     {
         $xmldoc = $this->getXMLObject($result);
         return $xmldoc->dumpmem();
@@ -390,7 +367,7 @@ class XML_sql2xml {
     * @return   Object DomDocument
     * @access   public
     */
-    function getXMLObject($result = Null)
+    function getXMLObject($result = null)
     {
         if ($result) {
             $this->add ($result);
@@ -406,62 +383,54 @@ class XML_sql2xml {
     */
     function doSql2Xml($result)
     {
-
         if (DB::IsError($result)) {
             print "Error in file ".__FILE__." at line ".__LINE__."<br>\n";
             print $result->userinfo."<br>\n";
-            new DB_Error($result->code,PEAR_ERROR_DIE);
+            new DB_Error($result->code, PEAR_ERROR_DIE);
         }
 
-        // the method_exists is here, cause tableInfo is only in the cvs at the moment
         // BE CAREFUL: if you have fields with the same name in different tables, you will get errors
         // later, since DB_FETCHMODE_ASSOC doesn't differentiate that stuff.
         $this->LastResult = &$result;
 
-        if (!method_exists($result,"tableInfo") || ! ($tableInfo = $result->tableInfo(False)))
-        {
+        if (!$tableInfo = $result->tableInfo(false)) {
             //emulate tableInfo. this can go away, if every db supports tableInfo
             $fetchmode = DB_FETCHMODE_ASSOC;
             $res = $result->FetchRow($fetchmode);
-            $this->nested = False;
+            $this->nested = false;
             $i = 0;
 
-            while (list($key, $val) = each($res))
-            {
-                $tableInfo[$i]["table"]= $this->tagNameResult;
-                $tableInfo[$i]["name"] = $key;
+            while (list($key, $val) = each($res)) {
+                $tableInfo[$i]['table']= $this->tagNameResult;
+                $tableInfo[$i]['name'] = $key;
                 $resFirstRow[$i] = $val;
                 $i++;
             }
             $res  = $resFirstRow;
-            $FirstFetchDone = True;
             $fetchmode = DB_FETCHMODE_ORDERED;
-        }
-        else
-        {
-            $FirstFetchDone = False;
+        } else {
             $fetchmode = DB_FETCHMODE_ORDERED;
         }
 
         // initialize db hierarchy...
-        $parenttable = "root";
-        $tableInfo["parent_key"]["root"] = 0;
+        $parenttable = 'root';
+        $tableInfo['parent_key']['root'] = 0;
 
-        foreach ($tableInfo as $key => $value)
-        {
-            if (is_int($key))
-            {
+        foreach ($tableInfo as $key => $value) {
+            if (is_int($key)) {
                 // if the sql-query had a function the table starts with a # (only in mysql i think....), then give the field the name of the table before...
-                if (preg_match ("/^#/",$value["table"]) || strlen($value["table"]) == 0) {
-                     $value["table"] = $tableInfo[($key - 1)]["table"] ;
-                    $tableInfo[$key]["table"] = $value["table"];
+                if (preg_match ("/^#/", $value['table']) || strlen($value['table']) === 0) {
+                    $value['table'] = $tableInfo[($key - 1)]['table'];
+                    $tableInfo[$key]['table'] = $value['table'];
                 }
 
-			  	if (!isset($tableInfo["parent_table"]) || !isset($tableInfo["parent_table"][$value["table"]]) || is_null($tableInfo["parent_table"][$value["table"]]))
-                {
-                    $tableInfo["parent_key"][$value["table"]] = $key;
-                    $tableInfo["parent_table"][$value["table"]] = $parenttable;
-                    $parenttable = $value["table"] ;
+                if (!isset($tableInfo['parent_table'])
+                    || !isset($tableInfo['parent_table'][$value['table']])
+                    || is_null($tableInfo['parent_table'][$value['table']])
+                ) {
+                    $tableInfo['parent_key'][$value['table']] = $key;
+                    $tableInfo['parent_table'][$value['table']] = $parenttable;
+                    $parenttable = $value['table'] ;
                 }
 
             }
@@ -472,8 +441,7 @@ class XML_sql2xml {
         // end initialize
 
         // if user made some own tableInfo data, merge them here.
-        if ($this->user_tableInfo)
-        {
+        if ($this->user_tableInfo) {
             $tableInfo = $this->array_merge_clobber($tableInfo,$this->user_tableInfo);
         }
         $parent['root'] = $this->insertNewResult($tableInfo);
@@ -481,133 +449,99 @@ class XML_sql2xml {
         //initialize $resold to get rid of warning messages;
         $resold[0] = "ThisValueIsImpossibleForTheFirstFieldInTheFirstRow";
 
-        while ($FirstFetchDone == True || $res = $result->FetchRow($fetchmode))
-        {
-
-            //FirstFetchDone is only for emulating tableInfo, as long as not all dbs support tableInfo. can go away later
-            $FirstFetchDone = False;
-
-            while (list($key, $val) = each($res))
-            {
-
-                if ($resold[$tableInfo["parent_key"][$tableInfo[$key]["table"]]] != $res[$tableInfo["parent_key"][$tableInfo[$key]["table"]]] || !$this->nested)
-                {
-                    if ($tableInfo["parent_key"][$tableInfo[$key]["table"]] == $key )
-                    {
-                        if ($this->nested || $key == 0)
-                        {
-
-                            $parent[$tableInfo[$key]["table"]] =  $this->insertNewRow($parent[$tableInfo["parent_table"][$tableInfo[$key]["table"]]], $res, $key, $tableInfo);
-                        }
-                        else
-                        {
-                            $parent[$tableInfo[$key]["table"]]= $parent[$tableInfo["parent_table"][$tableInfo[$key]["table"]]];
+        while ($res = $result->FetchRow($fetchmode)) {
+            while (list($key, $val) = each($res)) {
+                if ($resold[$tableInfo['parent_key'][$tableInfo[$key]['table']]] != $res[$tableInfo['parent_key'][$tableInfo[$key]['table']]] || !$this->nested) {
+                    if ($tableInfo['parent_key'][$tableInfo[$key]['table']] == $key ) {
+                        if ($this->nested || $key == 0) {
+                            $parent[$tableInfo[$key]['table']] = $this->insertNewRow($parent[$tableInfo['parent_table'][$tableInfo[$key]['table']]], $res, $key, $tableInfo);
+                        } else {
+                            $parent[$tableInfo[$key]['table']] = $parent[$tableInfo['parent_table'][$tableInfo[$key]['table']]];
                         }
 
                         //set all children entries to somethin stupid
-                        foreach($tableInfo["parent_table"] as $pkey => $pvalue)
-                        {
-                            if ($pvalue == $tableInfo[$key]["table"])
-                            {
-                                $resold[$tableInfo["parent_key"][$pkey]]= "ThisIsJustAPlaceHolder";
+                        foreach ($tableInfo['parent_table'] as $pkey => $pvalue) {
+                            if ($pvalue == $tableInfo[$key]['table']) {
+                                $resold[$tableInfo['parent_key'][$pkey]]= "ThisIsJustAPlaceHolder";
                             }
                         }
 
                     }
-                    if ( $parent[$tableInfo[$key]["table"]] != Null)
-                    {
-                        $this->insertNewElement($parent[$tableInfo[$key]["table"]], $res, $key, $tableInfo, $subrow);
+
+                    if ( $parent[$tableInfo[$key]['table']] != null) {
+                        $this->insertNewElement($parent[$tableInfo[$key]['table']], $res, $key, $tableInfo, $subrow);
                     }
 
                 }
             }
 
             $resold = $res;
-            unset ($subrow);
+            unset($subrow);
         }
+
         return $this->xmldoc;
     }
 
-
-
     /**
-    * For adding whole arrays to $this->xmldoc
-    *
-    * @param    array
-    * @param    Object domNode
-    * @access   private
-    * @see      addArray()
-    */
+     * For adding whole arrays to $this->xmldoc
+     *
+     * @param    array
+     * @param    Object domNode
+     * @access   private
+     * @see      addArray()
+     */
+    function DoArray2Xml ($array, $parent)
+    {
+        while (list($key, $val) = each($array)) {
+            $tableInfo[$key]['table'] = $this->tagNameResult;
+            $tableInfo[$key]['name']  = $key;
+        }
 
-    function DoArray2Xml ($array, $parent) {
-
-        while (list($key, $val) = each($array))
-            {
-                $tableInfo[$key]["table"]= $this->tagNameResult;
-                $tableInfo[$key]["name"] = $key;
-            }
-
-        if ($this->user_tableInfo)
-        {
+        if ($this->user_tableInfo) {
             $tableInfo = $this->array_merge_clobber($tableInfo,$this->user_tableInfo);
         }
-        foreach ($array as $key=>$value)
-        {
-            if (is_array($value) ) {
-                if (is_int($key) )
-                {
-                    $valuenew = array_slice($value,0,1);
-                    $keynew = array_keys($valuenew);
-                    $keynew = $keynew[0];
-                }
-                else
-                {
 
+        foreach ($array as $key => $value) {
+            if (is_array($value)) {
+                if (is_int($key)) {
+                    $valuenew = array_slice($value,0,1);
+                    $keynew   = array_keys($valuenew);
+                    $keynew   = $keynew[0];
+                } else {
                     $valuenew = $value;
                     $keynew = $key;
                 }
 
                 $rec2 = $this->insertNewRow($parent, $valuenew, $keynew, $tableInfo);
                 $this->DoArray2xml($value,$rec2);
-            }
-            else {
+            } else {
                 $this->insertNewElement($parent, $array, $key, $tableInfo, $subrow);
             }
         }
-
     }
 
-
-
     /**
-    * This method sets the options for the class
-    *  One can only set variables, which are defined at the top of
-    *  of this class.
-    *
-    * @param    array   options to be passed to the class
-    * @param    boolean   if the old suboptions should be deleted
-    * @access   public
-    * @see      $nested,$user_options,$user_tableInfo
-    */
-
-    function setOptions($options,$delete = False) {
-    //set options
-        if (is_array($options))
-        {
-            foreach ($options as $option => $value)
-            {
-               if (isset($this->{$option}))
-                {
-                    if (is_array($value) && ! $delete)
-                    {
-                        foreach ($value as $suboption => $subvalue)
-                        {
+     * This method sets the options for the class
+     *  One can only set variables, which are defined at the top of
+     *  of this class.
+     *
+     * @param    array   options to be passed to the class
+     * @param    boolean   if the old suboptions should be deleted
+     * @access   public
+     * @see      $nested,$user_options,$user_tableInfo
+     */
+    function setOptions($options, $delete = false)
+    {
+        //set options
+        if (is_array($options)) {
+            foreach ($options as $option => $value) {
+               if (isset($this->{$option})) {
+                    if (is_array($value) && ! $delete) {
+                        foreach ($value as $suboption => $subvalue) {
                             $this->{$option}["$suboption"] = $subvalue;
                         }
-                    }
-                    else
-                    {
-                          $this->$option = $value;
+                    } else {
+                        $this->$option = $value;
                     }
                 }
             }
@@ -617,72 +551,62 @@ class XML_sql2xml {
     // these are the functions, which are intended to be overriden in user classes
 
     /**
-    *
-    * @param    mixed
-    * @return   object  DomNode
-    * @access   private
-    */
+     *
+     * @param    mixed
+     * @return   object  DomNode
+     * @access   private
+     */
     function insertNewResult(&$metadata)
     {
-        if ($this->xmlroot)
-            return $this->xmlroot->new_child($this->tagNameResult, NULL);
-        else
-        {
-            $this->xmlroot = $this->xmldoc->add_root($this->tagNameResult);
-            //PHP 4.0.6 had $root->name as tagname, check for that here...
-            if (!isset($this->xmlroot->{$this->tagname}))
-            {
-                $this->tagname = "name";
-            }
-            return $this->xmlroot;
-
+        if ($this->xmlroot) {
+            return $this->xmlroot->new_child($this->tagNameResult, null);
         }
+
+        $this->xmlroot = $this->xmldoc->add_root($this->tagNameResult);
+        return $this->xmlroot;
     }
 
-
     /**
-    *   to be written
-    *
-    * @param    object DomNode $parent_row
-    * @param    mixed $res
-    * @param    mixed $key
-    * @param    mixed &metadata
-    * @return   object DomNode
-    * @access private
-    */
+     *   to be written
+     *
+     * @param    object DomNode $parent_row
+     * @param    mixed $res
+     * @param    mixed $key
+     * @param    mixed &metadata
+     * @return   object DomNode
+     * @access private
+     */
     function insertNewRow($parent_row, $res, $key, &$metadata)
     {
-        return  $parent_row->new_child($this->tagNameRow, Null);
+        return  $parent_row->new_child($this->tagNameRow, null);
     }
 
-
     /**
-    *   to be written
-    *
-    * @param    object DomNode $parent
-    * @param    mixed $res
-    * @param    mixed $key
-    * @param    mixed &$metadata
-    * @param    mixed &$subrow
-    * @return   object DomNode
-    * @access private
-    */
+     *   to be written
+     *
+     * @param    object DomNode $parent
+     * @param    mixed $res
+     * @param    mixed $key
+     * @param    mixed &$metadata
+     * @param    mixed &$subrow
+     * @return   object DomNode
+     * @access private
+     */
     function insertNewElement($parent, $res, $key, &$metadata, &$subrow)
     {
-        return  $parent->new_child($metadata[$key]["name"], $this->xml_encode($res[$key]));
+        return  $parent->new_child($metadata[$key]['name'], $this->xml_encode($res[$key]));
     }
 
-
     /**
-    *   to be written
-    *
-    * @param    mixed $key
-    * @param    mixed $value
-    * @param    mixed &$metadata
-    * @access private
-    */
-    function addTableInfo($key, $value, &$metadata) {
-
+     *   to be written
+     *
+     * @param    mixed $key
+     * @param    mixed $value
+     * @param    mixed &$metadata
+     * @access private
+     */
+    function addTableInfo($key, $value, &$metadata)
+    {
     }
 
     // end functions, which are intended to be overriden in user classes
@@ -699,31 +623,25 @@ class XML_sql2xml {
     */
     function xml_encode ($text)
     {
-        if (function_exists("iconv") && isset($this->encoding_from) && isset($this->encoding_to))
-        {
-             ini_set("track_errors",1);
-             $text = iconv($this->encoding_from,$this->encoding_to,ereg_replace("&","&amp;",ereg_replace("< ","&lt; ",$text)));
+        $repalce = ereg_replace("&","&amp;",ereg_replace("< ","&lt; ",$text));
+        if (function_exists('iconv') && isset($this->encoding_from) && isset($this->encoding_to)) {
+            ini_set('track_errors', 1);
+            $text = iconv($this->encoding_from, $this->encoding_to, $replace);
 
-             if (! isset($text) )
-             {
-                if (isset($php_errormsg))
-                {
-                    $errormsg = "error: $php_errormsg";
-                }
-                else
-                {
-                    $errormsg = "undefined iconv error, turn on track_errors in php.ini to get more details";
-                }
-                return PEAR::raiseError($errormsg,Null,PEAR_ERROR_DIE);
-             }
-             else {
+            if (isset($text)) {
                 return $text;
-             }
+            }
+
+            if (isset($php_errormsg)) {
+                $errormsg = "error: $php_errormsg";
+            } else {
+                $errormsg = "undefined iconv error, turn on track_errors in php.ini to get more details";
+            }
+            return PEAR::raiseError($errormsg, null, PEAR_ERROR_DIE);
+        } else {
+            $text = utf8_encode($replace);
         }
-        else
-        {
-            $text = utf8_encode(ereg_replace("&","&amp;",ereg_replace("< ","&lt; ",$text)));
-        }
+
         return $text;
     }
 
@@ -744,19 +662,18 @@ class XML_sql2xml {
     */
     function array_merge_clobber($a1,$a2)
     {
-        if(!is_array($a1) || !is_array($a2)) return false;
+        if (!is_array($a1) || !is_array($a2)) {
+            return false;
+        }
         $newarray = $a1;
-        while (list($key, $val) = each($a2))
-        {
-            if (is_array($val) && is_array($newarray[$key]))
-            {
+        while (list($key, $val) = each($a2)) {
+            if (is_array($val) && is_array($newarray[$key])) {
                 $newarray[$key] = $this->array_merge_clobber($newarray[$key], $val);
-            }
-            else
-            {
+            } else {
                 $newarray[$key] = $val;
             }
         }
+
         return $newarray;
     }
 
@@ -765,80 +682,22 @@ class XML_sql2xml {
     * It's inserted on the same level as a "normal" resultset, means just as a children of <root>
     * if a xpath expression is supplied, it takes that for selecting only part of the xml-file
     *
-    * the clean code works only with php 4.0.7
-    * for php4.0.6 :
-    * I found no cleaner method than the below one. it's maybe nasty (xmlObject->string->xmlObject),
-    *  but it works. If someone knows how to add whole DomNodes to another one, let me know...
-    *
     * @param    string xml string
-    * @param    mixed xpath  either a string with the xpath expression or an array with "xpath"=>xpath expression  and "root"=tag/subtag/etc, which are the tags to be inserted before the result
+    * @param    mixed xpath  either a string with the xpath expression or an array with
+    *                 "xpath"=>xpath expression  and "root"=tag/subtag/etc,
+    *                 which are the tags to be inserted before the result
     * @access private
     */
-
-    function doXmlString2Xml ($string,$xpath = Null)
+    function doXmlString2Xml ($string,$xpath = null)
     {
+        $MainXmlString = $this->xmldoc->dumpmem();
+        $string = preg_replace("/<\?xml.*\?>/","",$string);
 
-        //check if we have a recent domxml. otherwise use the workaround...
-        $version = explode(".",phpversion());
+        $MainXmlString = preg_replace("/<".$this->xmlroot->{$this->tagname}."\/>/","<".$this->xmlroot->{$this->tagname}."></".$this->xmlroot->{$this->tagname}.">",$MainXmlString);
+        $MainXmlString = preg_replace("/<\/".$this->xmlroot->{$this->tagname}.">/",$string."</".$this->xmlroot->{$this->tagname}.">",$MainXmlString);
 
-        if (! ($version[0] <= 4 and $version[1] <= 0 and $version[2] < 7) ){
-
-            if (is_array($xpath))
-            {
-                if (isset($xpath["root"]))
-                {
-                    $root = $xpath["root"];
-                }
-                $xpath = $xpath["xpath"];
-            }
-
-            $tmpxml = xmldoc($string);
-            $subroot = $this->xmlroot;
-
-            if (isset($root))
-            {
-                $roots = explode("/",$root);
-                foreach ($roots as $rootelement)
-                {
-                    if ( strlen($rootelement) > 0 )
-                    {
-                        $subroot = $subroot->new_child($rootelement,"");
-                    }
-                }
-            }
-
-
-            //$this->xmlroot->addchild does some strange things when added nodes from xpath.... so this comment helps out
-            $newchild = $subroot->add_child($this->xmldoc->create_comment("the purpose of this comment is a workaround in sql2php.php line ".__LINE__));
-
-
-            // if no xpath is given, just take the whole file
-            if ( (is_null($xpath)))
-            {
-                $newchild->replace_node($tmpxml->root());
-            }
-            else
-            {
-                $xctx = $tmpxml->xpath_new_context();
-                $xnode = xpath_eval($xctx,$xpath);
-                foreach ($xnode->nodeset as $node)
-                {
-                    $newchild->replace_node($node);
-                }
-            }
-
-         }
-        else {
-            $MainXmlString = $this->xmldoc->dumpmem();
-            $string = preg_replace("/<\?xml.*\?>/","",$string);
-
-            $MainXmlString = preg_replace("/<".$this->xmlroot->{$this->tagname}."\/>/","<".$this->xmlroot->{$this->tagname}."></".$this->xmlroot->{$this->tagname}.">",$MainXmlString);
-            $MainXmlString = preg_replace("/<\/".$this->xmlroot->{$this->tagname}.">/",$string."</".$this->xmlroot->{$this->tagname}.">",$MainXmlString);
-
-            $this->xmldoc = xmldoc($MainXmlString);
-            $this->xmlroot = $this->xmldoc->root();
-
-        }
+        $this->xmldoc  = xmldoc($MainXmlString);
+        $this->xmlroot = $this->xmldoc->root();
     }
 
     /**
@@ -847,25 +706,23 @@ class XML_sql2xml {
     * @param    string $encoding_to encoding to transform to
     * @access public
     */
-    function setEncoding ($encoding_from = "ISO-8859-1", $encoding_to ="UTF-8")
+    function setEncoding($encoding_from = 'ISO-8859-1', $encoding_to = 'UTF-8')
     {
         $this->encoding_from = $encoding_from;
-        $this->encoding_to = $encoding_to;
+        $this->encoding_to   = $encoding_to;
     }
+
     /**
     * @param array $parentTables parent to child relation
     * @access public
     */
-
     function SetParentTables($parentTables)
     {
-        foreach ($parentTables as $table => $parent)
-        {
-            $table_info["parent_table"][$table]=$parent;
+        foreach ($parentTables as $table => $parent) {
+            $table_info['parent_table'][$table] = $parent;
         }
-        $this->SetOptions(array("user_tableInfo"=>$table_info));
+        $this->SetOptions(array('user_tableInfo' => $table_info));
     }
-
 
     /**
     * returns the content of the first match of the xpath expression
@@ -874,26 +731,19 @@ class XML_sql2xml {
     * @return   mixed content of the evaluated xpath expression
     * @access   public
     */
-
-    function getXpathValue ($expr)
+    function getXpathValue($expr)
     {
+        $xpath = $this->xmldoc->xpath_new_context();
+        $xnode = xpath_eval($xpath, $expr);
 
-        $xpth = $this->xmldoc->xpath_new_context();
-        $xnode = xpath_eval($xpth,$expr);
-
-        if (isset ($xnode->nodeset[0]))
-        {
+        if (isset ($xnode->nodeset[0])) {
             $firstnode = $xnode->nodeset[0];
-
-            $children = $firstnode->children();
-            $value = $children[0]->content;
-                return $value;
+            $children  = $firstnode->children();
+            $value     = $children[0]->content;
+            return $value;
         }
 
-        else
-        {
-            return Null;
-        }
+        return null;
     }
 
     /**
@@ -903,26 +753,19 @@ class XML_sql2xml {
     * @return   array with key->value of subtags
     * @access   public
     */
-
-    function getXpathChildValues ($expr)
+    function getXpathChildValues($expr)
     {
-        $xpth = $this->xmldoc->xpath_new_context();
-        $xnode = xpath_eval($xpth,$expr);
+        $xpath = $this->xmldoc->xpath_new_context();
+        $xnode = xpath_eval($xpath, $expr);
 
-        if (isset ($xnode->nodeset[0]))
-        {
-            foreach ($xnode->nodeset[0]->children() as $child)
-            {
+        if (isset($xnode->nodeset[0])) {
+            foreach ($xnode->nodeset[0]->children() as $child) {
                 $children = $child->children();
                 $value[$child->{$this->tagname}] = $children[0]->content;
             }
             return $value;
         }
-        else
-        {
-            return Null;
-        }
-    }
 
+        return null;
+    }
 }
-?>
