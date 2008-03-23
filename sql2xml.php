@@ -623,7 +623,7 @@ class XML_sql2xml
     */
     function xml_encode ($text)
     {
-        $repalce = ereg_replace("&","&amp;",ereg_replace("< ","&lt; ",$text));
+        $replace = ereg_replace("&","&amp;",ereg_replace("< ","&lt; ",$text));
         if (function_exists('iconv') && isset($this->encoding_from) && isset($this->encoding_to)) {
             ini_set('track_errors', 1);
             $text = iconv($this->encoding_from, $this->encoding_to, $replace);
