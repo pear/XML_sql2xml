@@ -1,49 +1,65 @@
-<?xml version="1.0" encoding="ISO-8859-1" ?>
-<!DOCTYPE package SYSTEM "http://pear.php.net/dtd/package-1.0">
-<!-- do not use the "Type" attribute here, that one is only for
-     generated package.xml files -->
-<package version="1.0">
-  <name>XML_sql2xml</name>
-  <summary>Returns XML from a SQL-Query.
-</summary>
-<description>This class takes a PEAR::DB-Result Object, a sql-query-string, an array and/or an xml-string/file and returns a xml-representation of it.
+<?xml version="1.0" encoding="UTF-8"?>
+<package packagerversion="1.7.2" version="2.0" xmlns="http://pear.php.net/dtd/package-2.0" xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0
+http://pear.php.net/dtd/tasks-1.0.xsd
+http://pear.php.net/dtd/package-2.0
+http://pear.php.net/dtd/package-2.0.xsd">
+ <name>XML_sql2xml</name>
+ <channel>pear.php.net</channel>
+ <summary>Returns XML from a SQL-Query.</summary>
+ <description>This class takes a PEAR::DB-Result Object, a sql-query-string, an array and/or an xml-string/file and returns a xml-representation of it.
 
 It relies on the DOMXML extension of PHP.
-</description>
-  <maintainers>
-    <maintainer>
-      <user>chregu</user>
-      <name>Christian Stocker</name>
-      <email>chregu@php.net</email>
-    </maintainer>
-  </maintainers>
-   <license>PHP License</license>
-  <release>
-    <version>0.3.3</version>
-    <state>beta</state>
-    <date>2008-03-23</date>
-    <notes>
-        - fix for bug #1110 "addXmlString throws warning when calling append_child()"
-        - register dependencies in package.xml
-     </notes>
-    <filelist>
-      <dir name="/" baseinstalldir="XML">
-       <file role="php">sql2xml.php</file>
-       <file role="php">sql2xml_ext.php</file>
-       <dir name="doc" role="doc">
-        <file role="doc">tutorial.html</file>
-        <file role="doc">bands.xml</file>
-        <file role="doc">xmltest.sql</file>
-       </dir>
-      </dir>
 
-    </filelist>
-  </release>
-  <deps>
-    <dep type="ext" rel="has" optional="no">domxml</dep>
-    <dep type="php" rel="eq" version="4.3.0" />
-    <dep type="php" rel="lt" version="5" />
-  </deps>
-
-
+ </description>
+ <lead>
+  <name>Christian Stocker</name>
+  <user>chregu</user>
+  <email>chregu@php.net</email>
+  <active>no</active>
+ </lead>
+ <date>2008-03-23</date>
+ <time>18:11:46</time>
+ <version>
+  <release>0.3.3</release>
+  <api>0.3.3</api>
+ </version>
+ <stability>
+  <release>beta</release>
+  <api>beta</api>
+ </stability>
+ <license uri="http://www.php.net/license">PHP License</license>
+ <notes>
+- register dependencies in package.xml
+ </notes>
+ <contents>
+  <dir name="/">
+   <dir name="doc">
+    <file baseinstalldir="XML" name="bands.xml" role="doc" />
+    <file baseinstalldir="XML" name="tutorial.html" role="doc" />
+    <file baseinstalldir="XML" name="xmltest.sql" role="doc" />
+   </dir> <!-- //doc -->
+   <file baseinstalldir="XML" name="sql2xml.php" role="php" />
+   <file baseinstalldir="XML" name="sql2xml_ext.php" role="php" />
+  </dir> <!-- / -->
+ </contents>
+ <dependencies>
+  <required>
+   <php>
+    <min>4.3.0</min>
+    <exclude>5</exclude>
+   </php>
+   <pearinstaller>
+    <min>1.4.0</min>
+   </pearinstaller>
+   <package>
+    <name>DB</name>
+    <channel>pear.php.net</channel>
+    <min>1.7.13</min>
+   </package>
+   <extension>
+    <name>domxml</name>
+   </extension>
+  </required>
+ </dependencies>
+ <phprelease />
 </package>
