@@ -29,7 +29,8 @@ It relies on the DOMXML extension of PHP.
  </stability>
  <license uri="http://www.php.net/license">PHP License</license>
  <notes>
-- register dependencies in package.xml
+* register dependencies in package.xml
+* Fixed Bug #5576 XML_sql2xml package.xml uses file name="./doc/blah.whatever" which is invalid
  </notes>
  <contents>
   <dir name="/">
@@ -46,7 +47,7 @@ It relies on the DOMXML extension of PHP.
   <required>
    <php>
     <min>4.3.0</min>
-    <exclude>5</exclude>
+    <max>4.4</max>
    </php>
    <pearinstaller>
     <min>1.4.0</min>
@@ -60,6 +61,11 @@ It relies on the DOMXML extension of PHP.
     <name>domxml</name>
    </extension>
   </required>
+  <optional>
+   <extension>
+    <name>iconv</name>
+   </extension>
+  </optional>
  </dependencies>
  <phprelease />
 </package>
