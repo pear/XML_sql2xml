@@ -19,28 +19,29 @@ It relies on the DOMXML extension of PHP.
   </maintainers>
    <license>PHP License</license>
   <release>
-    <version>0.3.2</version>
+    <version>0.3.3</version>
     <state>beta</state>
-    <date>2004-04-01</date>
+    <date>2008-03-23</date>
     <notes>
         - fix for bug #1110 "addXmlString throws warning when calling append_child()"
         - register dependencies in package.xml
      </notes>
     <filelist>
-      <dir name="." baseinstalldir="XML">
-	<file role="php">sql2xml.php</file>
-	<file role="php">sql2xml_ext.php</file>
-	<dir name="doc" role="doc">
-	  <file role="doc">tutorial.html</file>
-	  <file role="doc">bands.xml</file>
-	  <file role="doc">xmltest.sql</file>
-	</dir>
+      <dir name="/" baseinstalldir="XML">
+       <file role="php">sql2xml.php</file>
+       <file role="php">sql2xml_ext.php</file>
+       <dir name="doc" role="doc">
+        <file role="doc">tutorial.html</file>
+        <file role="doc">bands.xml</file>
+        <file role="doc">xmltest.sql</file>
+       </dir>
       </dir>
 
     </filelist>
   </release>
   <deps>
     <dep type="ext" rel="has" optional="no">domxml</dep>
+    <dep type="php" rel="eq" version="4.3.0" />
     <dep type="php" rel="lt" version="5" />
   </deps>
 
