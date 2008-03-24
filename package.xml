@@ -32,6 +32,7 @@ It relies on the DOMXML extension of PHP.
 * register dependencies in package.xml [dufuz]
 * Fixed Bug #576  sql2xml xml-resultset without values [ifeghali]
 * Fixed Bug #5576 XML_sql2xml package.xml uses file name="./doc/blah.whatever" which is invalid [dufuz]
+* Fixed Bug #1687 function addArray() generates incorrectly designed XML document [ifeghali]
  </notes>
  <contents>
   <dir name="/">
