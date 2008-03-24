@@ -333,10 +333,46 @@ class XML_sql2xml
     * @access   public
     * @see      doArray2Xml()
     */
-    function addArray($array)
+    function addArray($array, $prefix = 'index_')
     {
         $parent_row = $this->insertNewResult($metadata);
-        $this->DoArray2Xml($array,$parent_row);
+
+        $array = $this->prepareArray($array, $prefix); 
+        if (!$array) {
+            return false;
+        }
+
+        $this->DoArray2Xml($array, $parent_row);
+    }
+
+    /**
+     * Makes sure the given array has no integer indices
+     *
+     * @param   array multidimensional array.
+     * @param   prefix string to prefix integer indices 
+     * @access  public
+     * @see     doArray()
+     */
+    function prepareArray($array, $prefix = 'index_')
+    {
+        if (!is_array($array)) {
+            return false;
+        }
+
+        $array_new = array();
+        foreach($array as $key => $val) {
+            if (!is_string($key)) {
+                $key = $prefix.$key; 
+            }
+
+            if (is_array($val)) {
+                $array_new[$key] = $this->prepareArray($val);
+            } else {
+                $array_new[$key] = $val;
+            }
+        }
+
+        return $array_new;
     }
 
     /**
@@ -513,7 +549,7 @@ class XML_sql2xml
                 }
 
                 $rec2 = $this->insertNewRow($parent, $valuenew, $keynew, $tableInfo);
-                $this->DoArray2xml($value,$rec2);
+                $this->DoArray2Xml($value,$rec2);
             } else {
                 $this->insertNewElement($parent, $array, $key, $tableInfo, $subrow);
             }
