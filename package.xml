@@ -20,25 +20,20 @@ It relies on the DOMXML extension of PHP.
  <date>2008-03-24</date>
  <time>18:11:46</time>
  <version>
-  <release>0.3.3</release>
+  <release>0.3.4</release>
   <api>0.3.3</api>
  </version>
  <stability>
   <release>beta</release>
   <api>beta</api>
  </stability>
- <license uri="http://www.php.net/license">PHP License</license>
+ <license>New BSD</license>
  <notes>
-Big thanks go out to Igor Feghali for help getting this release out the door
-
-* Fixed a lot of Coding Standard issues and made parts of the code more readable [dufuz]
-* register dependencies in package.xml [dufuz]
-* Fixed Bug #576  sql2xml xml-resultset without values [ifeghali]
-* Fixed Bug #5576 XML_sql2xml package.xml uses file name="./doc/blah.whatever" which is invalid [dufuz]
-* Fixed Bug #1687 function addArray() generates incorrectly designed XML document [ifeghali]
+* Change licence to the new BSD License (see http://www.opensource.org/licenses/bsd-license.php)
  </notes>
  <contents>
   <dir name="/">
+   <file baseinstalldir="XML" name="LICENSE" role="doc" />
    <dir name="doc">
     <file baseinstalldir="XML" name="bands.xml" role="doc" />
     <file baseinstalldir="XML" name="tutorial.html" role="doc" />

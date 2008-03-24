@@ -1,21 +1,17 @@
 <?php
-// +----------------------------------------------------------------------+
-// | PHP Version 4                                                        |
-// +----------------------------------------------------------------------+
-// | Copyright (c) 1997-2003 The PHP Group                                |
-// +----------------------------------------------------------------------+
-// | This source file is subject to version 2.0 of the PHP license,       |
-// | that is bundled with this package in the file LICENSE, and is        |
-// | available at through the world-wide-web at                           |
-// | http://www.php.net/license/2_02.txt.                                 |
-// | If you did not receive a copy of the PHP license and are unable to   |
-// | obtain it through the world-wide-web, please send a note to          |
-// | license@php.net so we can mail you a copy immediately.               |
-// +----------------------------------------------------------------------+
-// | Authors: Christian Stocker <chregu@phant.ch>                         |
-// +----------------------------------------------------------------------+
-//
-// $Id$
+/**
+ * XML::sql2xml
+ *
+ * PHP version 4
+ *
+ * @category   XML
+ * @package    XML_sql2xml
+ * @author     Christian Stocker <chregu@php.net>
+ * @copyright  2001 - 2008 Christian Stocker
+ * @license    BSD, revised
+ * @version    CVS: $Id$
+ * @link       http://pear.php.net/package/XML_sql2xml
+ */
 
 /**
 * This class takes a PEAR::DB-Result Object, a sql-query-string or an array
@@ -337,7 +333,7 @@ class XML_sql2xml
     {
         $parent_row = $this->insertNewResult($metadata);
 
-        $array = $this->prepareArray($array, $prefix); 
+        $array = $this->prepareArray($array, $prefix);
         if (!$array) {
             return false;
         }
@@ -349,7 +345,7 @@ class XML_sql2xml
      * Makes sure the given array has no integer indices
      *
      * @param   array multidimensional array.
-     * @param   prefix string to prefix integer indices 
+     * @param   prefix string to prefix integer indices
      * @access  public
      * @see     doArray()
      */
@@ -362,7 +358,7 @@ class XML_sql2xml
         $array_new = array();
         foreach($array as $key => $val) {
             if (!is_string($key)) {
-                $key = $prefix.$key; 
+                $key = $prefix.$key;
             }
 
             if (is_array($val)) {
